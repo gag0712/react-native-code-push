@@ -2,6 +2,31 @@ export type DownloadProgressCallback = (progress: DownloadProgress) => void;
 export type SyncStatusChangedCallback = (status: CodePush.SyncStatus) => void;
 export type HandleBinaryVersionMismatchCallback = (update: RemotePackage) => void;
 
+// from code-push SDK
+export interface UpdateCheckRequest {
+    app_version: string;
+    client_unique_id?: string;
+    deployment_key: string;
+    is_companion?: boolean;
+    label?: string;
+    package_hash?: string;
+}
+
+// from code-push SDK
+export interface UpdateCheckResponse {
+    download_url?: string;
+    description?: string;
+    is_available: boolean;
+    is_disabled?: boolean;
+    target_binary_range: string;
+    /*generated*/ label?: string;
+    /*generated*/ package_hash?: string;
+    package_size?: number;
+    should_run_binary_version?: boolean;
+    update_app_version?: boolean;
+    is_mandatory?: boolean;
+}
+
 export interface CodePushOptions extends SyncOptions {
     /**
      * Specifies when you would like to synchronize updates with the CodePush server.
@@ -13,6 +38,12 @@ export interface CodePushOptions extends SyncOptions {
      * It is used for self-hosting.
      */
     bundleHost?: string;
+    /**
+     * Specify a function to perform the update check.
+     * It can be used for self-hosting.
+     * Defaults to AppCenter update_check REST API request.
+     */
+    updateChecker?: (updateRequest: UpdateCheckRequest) => Promise<{ update_info: UpdateCheckResponse }>;
 }
 
 export interface DownloadProgress {

@@ -50,7 +50,43 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
     }
   }
 
-  const update = await sdk.queryUpdateWithCurrentPackage(queryPackage);
+  const update = sharedCodePushOptions.updateChecker
+      ? await (async () => {
+        // refer to `UpdateCheckRequest` type inside code-push SDK
+        const updateRequest = {
+          deployment_key: config.deploymentKey,
+          app_version: queryPackage.appVersion,
+          package_hash: queryPackage.packageHash,
+          is_companion: config.ignoreAppVersion,
+          label: queryPackage.label,
+          client_unique_id: config.clientUniqueId,
+        };
+
+        const response = await sharedCodePushOptions.updateChecker(updateRequest);
+
+        // extracted from the internal processing of the code-push SDK
+        const updateInfo = response.update_info;
+        if (!updateInfo) {
+          return null;
+        } else if (updateInfo.update_app_version) {
+          return { updateAppVersion: true, appVersion: updateInfo.target_binary_range };
+        } else if (!updateInfo.is_available) {
+          return null;
+        }
+
+        // refer to `RemotePackage` type inside code-push SDK
+        return {
+          deploymentKey: config.deploymentKey,
+          description: updateInfo.description ?? '',
+          label: updateInfo.label ?? '',
+          appVersion: updateInfo.target_binary_range ?? '',
+          isMandatory: updateInfo.is_mandatory ?? false,
+          packageHash: updateInfo.package_hash ?? '',
+          packageSize: updateInfo.package_size ?? 0,
+          downloadUrl: updateInfo.download_url ?? '',
+        };
+      })()
+      : await sdk.queryUpdateWithCurrentPackage(queryPackage);
 
   const fileName = update && typeof update.downloadUrl === 'string' ? update.downloadUrl.split('/').pop() : null;
   if (sharedCodePushOptions.bundleHost && fileName) {
@@ -517,8 +553,19 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
 let CodePush;
 
 /**
+ * @callback updateChecker
+ * @param {UpdateCheckRequest} updateRequest Current package information to check for updates.
+ * @returns {Promise<{update_info: UpdateCheckResponse}>} The result of the update check. Follows the AppCenter API response interface.
+ */
+
+/**
  * If you pass options once when calling `codePushify`, they will be shared with related functions.
- * @type {{setBundleHost(host: string): void, bundleHost: string|undefined}}
+ * @type {{
+ *   bundleHost: string | undefined,
+ *   setBundleHost(host: string): void,
+ *   updateChecker: updateChecker | undefined,
+ *   setUpdateChecker(updateCheckerFunction: updateChecker): void,
+ * }}
  */
 const sharedCodePushOptions = {
   bundleHost: undefined,
@@ -528,6 +575,11 @@ const sharedCodePushOptions = {
       host += '/';
     }
     this.bundleHost = host;
+  },
+  updateChecker: undefined,
+  setUpdateChecker(updateCheckerFunction) {
+    if (updateCheckerFunction && typeof updateCheckerFunction !== 'function') throw new Error('pass a function to setUpdateChecker');
+    this.updateChecker = updateCheckerFunction;
   }
 }
 
@@ -552,6 +604,7 @@ function codePushify(options = {}) {
   }
 
   sharedCodePushOptions.setBundleHost(options.bundleHost);
+  sharedCodePushOptions.setUpdateChecker(options.updateChecker);
 
   var decorator = (RootComponent) => {
     const extended = class CodePushComponent extends React.Component {
