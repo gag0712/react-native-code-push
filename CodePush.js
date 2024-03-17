@@ -523,6 +523,7 @@ let CodePush;
 const sharedCodePushOptions = {
   bundleHost: undefined,
   setBundleHost(host) {
+    if (host && typeof host !== 'string') throw new Error('pass a string to setBundleHost');
     if (typeof host === 'string' && host.slice(-1) !== '/') {
       host += '/';
     }
