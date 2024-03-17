@@ -4,6 +4,7 @@ export type HandleBinaryVersionMismatchCallback = (update: RemotePackage) => voi
 
 // from code-push SDK
 export interface UpdateCheckRequest {
+    /** The native version, not in package.json. */
     app_version: string;
     client_unique_id?: string;
     deployment_key: string;
