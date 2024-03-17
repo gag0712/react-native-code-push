@@ -246,13 +246,33 @@ If you would like to display an update confirmation dialog (an "active install")
 
 *NOTE: If you are using [Redux](http://redux.js.org) and [Redux Saga](https://redux-saga.js.org/), you can alternatively use the [react-native-code-push-saga](http://github.com/lostintangent/react-native-code-push-saga) module, which allows you to customize when `sync` is called in a perhaps simpler/more idiomatic way.*
 
-You can self-host the update's file.
-Upload the file to your server exactly as you uploaded it to AppCenter. And specify the host and path using the `bundleHost` option. 
+You can self-host the update's file. Upload the file to your server exactly as you uploaded it to AppCenter. And specify the host and path using the `bundleHost` option. 
 
 ```javascript
 let codePushOptions = {
   checkFrequency: codePush.CheckFrequency.MANUAL,
   bundlehost: 'https://cdn.yours.com/codepush/bundle/',
+};
+
+let MyApp: () => React$Node = () => {
+}
+
+MyApp = codePush(codePushOptions)(MyApp);
+```
+
+You can customize the behavior by specifying a function to perform the update check instead. (The 'bundleHost' option can be used with it.)
+
+```javascript
+let codePushOptions = {
+  checkFrequency: codePush.CheckFrequency.MANUAL,
+  bundlehost: 'https://cdn.yours.com/codepush/bundle/',
+  updateChecker: async (updateCheckRequest) => {
+    // It's up to you to decide what to do.
+    const { data: response } = await axios.get('https://your.api.com/update_check', {
+      params: { app_version: updateCheckRequest.app_version }
+    });
+    return response;
+  },
 };
 
 let MyApp: () => React$Node = () => {
