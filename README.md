@@ -246,6 +246,22 @@ If you would like to display an update confirmation dialog (an "active install")
 
 *NOTE: If you are using [Redux](http://redux.js.org) and [Redux Saga](https://redux-saga.js.org/), you can alternatively use the [react-native-code-push-saga](http://github.com/lostintangent/react-native-code-push-saga) module, which allows you to customize when `sync` is called in a perhaps simpler/more idiomatic way.*
 
+You can self-host the update's file.
+Upload the file to your server exactly as you uploaded it to AppCenter. And specify the host and path using the `bundleHost` option. 
+
+```javascript
+let codePushOptions = {
+  checkFrequency: codePush.CheckFrequency.MANUAL,
+  bundlehost: 'https://cdn.yours.com/codepush/bundle/',
+};
+
+let MyApp: () => React$Node = () => {
+}
+
+MyApp = codePush(codePushOptions)(MyApp);
+```
+
+
 ### Store Guideline Compliance
 
 Android Google Play and iOS App Store have corresponding guidelines that have rules you should be aware of before integrating the CodePush solution within your application.
