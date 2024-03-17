@@ -52,6 +52,11 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
 
   const update = await sdk.queryUpdateWithCurrentPackage(queryPackage);
 
+  const fileName = update && typeof update.downloadUrl === 'string' ? update.downloadUrl.split('/').pop() : null;
+  if (sharedCodePushOptions.bundleHost && fileName) {
+    update.downloadUrl = sharedCodePushOptions.bundleHost + fileName;
+  }
+
   /*
    * There are four cases where checkForUpdate will resolve to null:
    * ----------------------------------------------------------------
@@ -479,8 +484,8 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
             }
           });
         }
-        
-        // Since the install button should be placed to the 
+
+        // Since the install button should be placed to the
         // right of any other button, add it last
         dialogButtons.push({
           text: installButtonText,
@@ -511,6 +516,20 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
 
 let CodePush;
 
+/**
+ * If you pass options once when calling `codePushify`, they will be shared with related functions.
+ * @type {{setBundleHost(host: string): void, bundleHost: string|undefined}}
+ */
+const sharedCodePushOptions = {
+  bundleHost: undefined,
+  setBundleHost(host) {
+    if (typeof host === 'string' && host.slice(-1) !== '/') {
+      host += '/';
+    }
+    this.bundleHost = host;
+  }
+}
+
 function codePushify(options = {}) {
   let React;
   let ReactNative = require("react-native");
@@ -530,6 +549,8 @@ function codePushify(options = {}) {
 2. Call the codePush.sync API in your component instead of using the @codePush decorator`
     );
   }
+
+  sharedCodePushOptions.setBundleHost(options.bundleHost);
 
   var decorator = (RootComponent) => {
     const extended = class CodePushComponent extends React.Component {

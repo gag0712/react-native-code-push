@@ -8,6 +8,11 @@ export interface CodePushOptions extends SyncOptions {
      * Defaults to codePush.CheckFrequency.ON_APP_START.
      */
     checkFrequency: CodePush.CheckFrequency;
+    /**
+     * Specifies the location of the update's file. It should include the http scheme and host.
+     * It is used for self-hosting.
+     */
+    bundleHost?: string;
 }
 
 export interface DownloadProgress {
@@ -122,8 +127,8 @@ export interface SyncOptions {
 
     /**
      * Specifies the minimum number of seconds that the app needs to have been in the background before restarting the app. This property
-     * only applies to updates which are installed using `InstallMode.ON_NEXT_RESUME` or `InstallMode.ON_NEXT_SUSPEND`, and can be useful 
-     * for getting your update in front of end users sooner, without being too obtrusive. Defaults to `0`, which has the effect of applying 
+     * only applies to updates which are installed using `InstallMode.ON_NEXT_RESUME` or `InstallMode.ON_NEXT_SUSPEND`, and can be useful
+     * for getting your update in front of end users sooner, without being too obtrusive. Defaults to `0`, which has the effect of applying
      * the update immediately after a resume or unless the app suspension is long enough to not matter, regardless how long it was in the background.
      */
     minimumBackgroundDuration?: number;
@@ -257,7 +262,7 @@ declare namespace CodePush {
      * Asks the CodePush service whether the configured app deployment has an update available.
      *
      * @param deploymentKey The deployment key to use to query the CodePush server for an update.
-     * 
+     *
      * @param handleBinaryVersionMismatchCallback An optional callback for handling target binary version mismatch
      */
     function checkForUpdate(deploymentKey?: string, handleBinaryVersionMismatchCallback?: HandleBinaryVersionMismatchCallback): Promise<RemotePackage | null>;
@@ -326,7 +331,7 @@ declare namespace CodePush {
         /**
          * Indicates that you want to install the update, but don't want to restart the app until the next time
          * the end user resumes it from the background. This way, you don't disrupt their current session,
-         * but you can get the update in front of them sooner then having to wait for the next natural restart. 
+         * but you can get the update in front of them sooner then having to wait for the next natural restart.
          * This value is appropriate for silent installs that can be applied on resume in a non-invasive way.
          */
         ON_NEXT_RESUME,
@@ -347,30 +352,30 @@ declare namespace CodePush {
          * The app is up-to-date with the CodePush server.
          */
         UP_TO_DATE,
-            
+
         /**
          * An available update has been installed and will be run either immediately after the
          * syncStatusChangedCallback function returns or the next time the app resumes/restarts,
          * depending on the InstallMode specified in SyncOptions
          */
         UPDATE_INSTALLED,
-            
+
         /**
          * The app had an optional update which the end user chose to ignore.
          * (This is only applicable when the updateDialog is used)
          */
         UPDATE_IGNORED,
-            
+
         /**
          * The sync operation encountered an unknown error.
          */
         UNKNOWN_ERROR,
-        
+
         /**
          * There is an ongoing sync operation running which prevents the current call from being executed.
          */
         SYNC_IN_PROGRESS,
-            
+
         /**
          * The CodePush server is being queried for an update.
          */
