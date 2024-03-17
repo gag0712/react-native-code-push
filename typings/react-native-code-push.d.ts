@@ -36,6 +36,7 @@ export interface CodePushOptions extends SyncOptions {
     /**
      * Specifies the location of the update's file. It should include the http scheme and host.
      * It is used for self-hosting.
+     * Defaults to AppCenter storage.
      */
     bundleHost?: string;
     /**
