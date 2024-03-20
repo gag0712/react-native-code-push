@@ -46,6 +46,10 @@ export interface CodePushOptions extends SyncOptions {
      * Defaults to AppCenter update_check REST API request.
      */
     updateChecker?: (updateRequest: UpdateCheckRequest) => Promise<{ update_info: UpdateCheckResponse }>;
+    /**
+     * Specifies whether to run the original action, which queries AppCenter if an error occurs while running the `updateChecker` function.
+     */
+    fallbackToAppCenter?: boolean;
 }
 
 export interface DownloadProgress {

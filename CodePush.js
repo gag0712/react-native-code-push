@@ -52,39 +52,46 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
 
   const update = sharedCodePushOptions.updateChecker
       ? await (async () => {
-        // refer to `UpdateCheckRequest` type inside code-push SDK
-        const updateRequest = {
-          deployment_key: config.deploymentKey,
-          app_version: queryPackage.appVersion,
-          package_hash: queryPackage.packageHash,
-          is_companion: config.ignoreAppVersion,
-          label: queryPackage.label,
-          client_unique_id: config.clientUniqueId,
-        };
+        try {
+          // refer to `UpdateCheckRequest` type inside code-push SDK
+          const updateRequest = {
+            deployment_key: config.deploymentKey,
+            app_version: queryPackage.appVersion,
+            package_hash: queryPackage.packageHash,
+            is_companion: config.ignoreAppVersion,
+            label: queryPackage.label,
+            client_unique_id: config.clientUniqueId,
+          };
 
-        const response = await sharedCodePushOptions.updateChecker(updateRequest);
+          const response = await sharedCodePushOptions.updateChecker(updateRequest);
 
-        // extracted from the internal processing of the code-push SDK
-        const updateInfo = response.update_info;
-        if (!updateInfo) {
-          return null;
-        } else if (updateInfo.update_app_version) {
-          return { updateAppVersion: true, appVersion: updateInfo.target_binary_range };
-        } else if (!updateInfo.is_available) {
-          return null;
+          // extracted from the internal processing of the code-push SDK
+          const updateInfo = response.update_info;
+          if (!updateInfo) {
+            return null;
+          } else if (updateInfo.update_app_version) {
+            return { updateAppVersion: true, appVersion: updateInfo.target_binary_range };
+          } else if (!updateInfo.is_available) {
+            return null;
+          }
+
+          // refer to `RemotePackage` type inside code-push SDK
+          return {
+            deploymentKey: config.deploymentKey,
+            description: updateInfo.description ?? '',
+            label: updateInfo.label ?? '',
+            appVersion: updateInfo.target_binary_range ?? '',
+            isMandatory: updateInfo.is_mandatory ?? false,
+            packageHash: updateInfo.package_hash ?? '',
+            packageSize: updateInfo.package_size ?? 0,
+            downloadUrl: updateInfo.download_url ?? '',
+          };
+        } catch (error) {
+          log(`An error has occurred at update checker : ${error.stack}`);
+          if (sharedCodePushOptions.fallbackToAppCenter) {
+            return await sdk.queryUpdateWithCurrentPackage(queryPackage);
+          }
         }
-
-        // refer to `RemotePackage` type inside code-push SDK
-        return {
-          deploymentKey: config.deploymentKey,
-          description: updateInfo.description ?? '',
-          label: updateInfo.label ?? '',
-          appVersion: updateInfo.target_binary_range ?? '',
-          isMandatory: updateInfo.is_mandatory ?? false,
-          packageHash: updateInfo.package_hash ?? '',
-          packageSize: updateInfo.package_size ?? 0,
-          downloadUrl: updateInfo.download_url ?? '',
-        };
       })()
       : await sdk.queryUpdateWithCurrentPackage(queryPackage);
 
@@ -565,6 +572,8 @@ let CodePush;
  *   setBundleHost(host: string): void,
  *   updateChecker: updateChecker | undefined,
  *   setUpdateChecker(updateCheckerFunction: updateChecker): void,
+ *   fallbackToAppCenter: boolean,
+ *   setFallbackToAppCenter(enable: boolean): void
  * }}
  */
 const sharedCodePushOptions = {
@@ -580,6 +589,10 @@ const sharedCodePushOptions = {
   setUpdateChecker(updateCheckerFunction) {
     if (updateCheckerFunction && typeof updateCheckerFunction !== 'function') throw new Error('pass a function to setUpdateChecker');
     this.updateChecker = updateCheckerFunction;
+  },
+  fallbackToAppCenter: true,
+  setFallbackToAppCenter(enable) {
+    this.fallbackToAppCenter = enable;
   }
 }
 
@@ -605,6 +618,7 @@ function codePushify(options = {}) {
 
   sharedCodePushOptions.setBundleHost(options.bundleHost);
   sharedCodePushOptions.setUpdateChecker(options.updateChecker);
+  sharedCodePushOptions.setFallbackToAppCenter(options.fallbackToAppCenter);
 
   var decorator = (RootComponent) => {
     const extended = class CodePushComponent extends React.Component {
