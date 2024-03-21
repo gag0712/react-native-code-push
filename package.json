@@ -1,5 +1,5 @@
 {
-  "name": "@bravemobile/react-native-code-push",
+  "name": "@soomgo/react-native-code-push",
   "version": "8.2.3",
   "description": "React Native plugin for the CodePush service",
   "main": "CodePush.js",
