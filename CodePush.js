@@ -90,14 +90,19 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           log(`An error has occurred at update checker : ${error.stack}`);
           if (sharedCodePushOptions.fallbackToAppCenter) {
             return await sdk.queryUpdateWithCurrentPackage(queryPackage);
+          } else {
+            // update will not happen
+            return undefined;
           }
         }
       })()
       : await sdk.queryUpdateWithCurrentPackage(queryPackage);
 
-  const fileName = update && typeof update.downloadUrl === 'string' ? update.downloadUrl.split('/').pop() : null;
-  if (sharedCodePushOptions.bundleHost && fileName) {
-    update.downloadUrl = sharedCodePushOptions.bundleHost + fileName;
+  if (sharedCodePushOptions.bundleHost && update) {
+    const fileName = typeof update.downloadUrl === 'string' ? update.downloadUrl.split('/').pop() : null;
+    if (fileName) {
+      update.downloadUrl = sharedCodePushOptions.bundleHost + fileName;
+    }
   }
 
   /*
