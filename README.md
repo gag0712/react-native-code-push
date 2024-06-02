@@ -1,3 +1,57 @@
+## @bravemobile/react-native-code-push
+
+Fork of `code-push-react-native`
+
+```bash
+npm install @bravemobile/react-native-code-push
+```
+
+You'll have more flexibility and freedom in your deployment strategy.
+You can still use CodePush, but become independent of AppCenter's cloud infrastructure.
+
+### Self-host the update bundle file
+
+Specify the host and path using the `bundleHost` option.
+
+Upload the code-push bundle file to your server. The file name should be exactly same as the file on AppCenter.
+
+```javascript
+const codePushOptions = {
+  bundlehost: 'https://cdn.yours.com/codepush/bundle/',
+};
+
+export default codePush(codePushOptions)(MyApp);
+```
+
+### Customize the update check behavior
+
+Specify a function to perform the update check using the `updateChecker` option.
+
+(The `bundleHost` option can be used in combination.)
+
+`fallbackToAppCenter` : If an error occurs during the execution of the updateChecker function, the original update check behavior is performed as a fallback. (default: true)
+
+```javascript
+const codePushOptions = {
+  updateChecker: async (updateCheckRequest) => {
+    // It's up to you to decide what to do.
+    // However, you need to have a good understanding of Code Push's interface to configure your response.
+    const { data: response } = await axios.get('https://your.api.com/update_check', {
+      params: { app_version: updateCheckRequest.app_version }
+    });
+    return response;
+  },
+  fallbackToAppCenter: true,
+};
+
+export default codePush(codePushOptions)(MyApp);
+```
+
+
+## Original README.md is below. 
+
+---
+
 [![appcenterbanner](https://user-images.githubusercontent.com/31293287/32969262-3cc5d48a-cb99-11e7-91bf-fa57c67a371c.png)](http://microsoft.github.io/code-push/)
 
 #### [Sign up With App Center](https://appcenter.ms/signup?utm_source=CodePush&utm_medium=Azure) to use CodePush
