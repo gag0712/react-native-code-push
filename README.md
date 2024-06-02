@@ -273,8 +273,6 @@ let codePushOptions = {
     });
     return response;
   },
-  // If an error occurs during the execution of the updateChecker function, the original update check behavior is performed as a fallback. (default: true)
-  fallbackToAppCenter: true,
 };
 
 let MyApp: () => React$Node = () => {
