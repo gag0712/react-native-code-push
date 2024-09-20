@@ -186,6 +186,14 @@ export interface SyncOptions {
      * one or more of the default values.
      */
     rollbackRetryOptions?: RollbackRetryOptions;
+
+    /**
+     * Specifies whether to ignore the update if the installation fails.
+     * If set to false, the update will be retried when the sync method is called, even if the previous installation attempt failed.
+     * However, depending on the deployment strategy, if an update that cannot be successfully installed is deployed, this option could result in an infinite update retry loop.
+     * Defaults to true.
+     */
+    ignoreFailedUpdates?: boolean;
 }
 
 export interface UpdateDialog {
