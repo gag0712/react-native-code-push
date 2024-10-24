@@ -13,6 +13,26 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
+/**
+ * Alias for a string representing a released CodePush update version.
+ */
+type ReleaseVersion = string;
+
+/**
+ * The interface representing the release information that the `updateChecker` function must return.
+ */
+export type ReleaseHistoryInterface = Record<ReleaseVersion, ReleaseInfo>;
+
+/**
+ * The interface that represents a single deployment history entry, which the `updateChecker` function should return.
+ */
+export interface ReleaseInfo {
+    enabled: boolean;
+    mandatory: boolean;
+    downloadUrl: string;
+    packageHash: string;
+}
+
 // from code-push SDK
 export interface UpdateCheckResponse {
     download_url?: string;
@@ -41,11 +61,14 @@ export interface CodePushOptions extends SyncOptions {
      */
     bundleHost?: string;
     /**
-     * Specify a function to perform the update check.
-     * It can be used for self-hosting.
-     * Defaults to AppCenter update_check REST API request.
+     * Specifies the version of the app that is currently running.
+     * It can be the version from package.json (or another source).
      */
-    updateChecker?: (updateRequest: UpdateCheckRequest) => Promise<{ update_info: UpdateCheckResponse }>;
+    runtimeVersion: string;
+    /**
+     * Specifies a function to get the release history.
+     */
+    updateChecker: (updateRequest: UpdateCheckRequest) => Promise<ReleaseHistoryInterface>;
     /**
      * Specifies whether to run the original action, which queries AppCenter if an error occurs while running the `updateChecker` function.
      */

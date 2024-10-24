@@ -63,10 +63,77 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
             client_unique_id: config.clientUniqueId,
           };
 
-          const response = await sharedCodePushOptions.updateChecker(updateRequest);
+          /**
+           * `releaseHistory`
+           * @type {ReleaseHistoryInterface}
+           */
+          const releaseHistory = await sharedCodePushOptions.updateChecker(updateRequest);
 
-          // extracted from the internal processing of the code-push SDK
-          const updateInfo = response.update_info;
+          /**
+           * `runtimeVersion`
+           * (In our case, it's a package.json version.)
+           * @type {string}
+           */
+          const runtimeVersion = sharedCodePushOptions.runtimeVersion;
+
+
+          // NOTE: It is not necessary to implement it in three steps. However, it is recommended to implement unit-test-friendly.
+          /**
+           * TODO 1: find latest release in releaseHistory
+           * @return {ReleaseInfo}
+           */
+          function findLatestRelease(releaseHistory) {}
+
+          /**
+           * TODO 2: check if the update is mandatory
+           * @return {boolean}
+           */
+          function checkIsMandatory(runtimeVersion, releaseHistory) {}
+
+          /**
+           * TODO 3: determine whether to rollback and execute it
+           * @return {boolean}
+           */
+          function shouldRollback(runtimeVersion, releaseHistory) {}
+          if (shouldRollback(runtimeVersion, releaseHistory)) {
+            // rollback
+          }
+
+          // NOTE: sample code
+          const update = findLatestRelease(releaseHistory);
+          const isMandatory = checkIsMandatory(runtimeVersion, update);
+
+
+          /**
+           * Convert the update information decided from `ReleaseHistoryInterface` to be passed to the library core (original CodePush library).
+           *
+           * @type {UpdateCheckResponse} the interface required by the original CodePush library.
+           */
+          const updateInfo = {
+            download_url: update.downloadUrl,
+            // (`enabled` will always be true in the release information obtained from the previous process.)
+            is_available: update.enabled,
+            package_hash: update.packageHash,
+            is_mandatory: isMandatory,
+            // 이건 항상 현재 실행중인 바이너리 버전을 전달한다.
+            // 조회한 업데이트가 현재 바이너리를 타겟하는가? 를 API 서버에서 판단한 다음, 해당 된다면 런타임 바이너리 버전을 그대로 돌려주던 것임.
+            // 우리는 updateChecker 조회 결과가 넘어왔다면 해당 정보는 현재 런타임 바이너리에 호환됨을 전제로 하고있음.
+            target_binary_range: updateRequest.app_version,
+            // 현재는 텔레메트리 외에 유의미한 사용처가 없음.
+            label: runtimeVersion,
+            // false 전달해야 정상 동작함
+            update_app_version: false,
+            // 그닥 쓸모 없음
+            description: '',
+            // 런타임에 안쓰임
+            is_disabled: false,
+            // 런타임에 안쓰임
+            package_size: 0,
+            // 런타임에 안쓰임
+            should_run_binary_version: false,
+          }
+
+
           if (!updateInfo) {
             return null;
           } else if (updateInfo.update_app_version) {
@@ -567,7 +634,7 @@ let CodePush;
 /**
  * @callback updateChecker
  * @param {UpdateCheckRequest} updateRequest Current package information to check for updates.
- * @returns {Promise<{update_info: UpdateCheckResponse}>} The result of the update check. Follows the AppCenter API response interface.
+ * @returns {Promise<ReleaseHistoryInterface>} The release history of the updates deployed for a specific binary version.
  */
 
 /**
@@ -577,6 +644,8 @@ let CodePush;
  *   setBundleHost(host: string): void,
  *   updateChecker: updateChecker | undefined,
  *   setUpdateChecker(updateCheckerFunction: updateChecker): void,
+ *   runtimeVersion: string,
+ *   setRuntimeVersion(version: string): void,
  *   fallbackToAppCenter: boolean,
  *   setFallbackToAppCenter(enable: boolean): void
  * }}
@@ -589,6 +658,11 @@ const sharedCodePushOptions = {
       host += '/';
     }
     this.bundleHost = host;
+  },
+  runtimeVersion: undefined,
+  setRuntimeVersion(version) {
+    // TODO ? validation (if we require SemVer format)
+    this.runtimeVersion = version;
   },
   updateChecker: undefined,
   setUpdateChecker(updateCheckerFunction) {
@@ -622,6 +696,7 @@ function codePushify(options = {}) {
   }
 
   sharedCodePushOptions.setBundleHost(options.bundleHost);
+  sharedCodePushOptions.setRuntimeVersion(options.runtimeVersion);
   sharedCodePushOptions.setUpdateChecker(options.updateChecker);
   sharedCodePushOptions.setFallbackToAppCenter(options.fallbackToAppCenter);
 
