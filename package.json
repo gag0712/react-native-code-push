@@ -29,7 +29,8 @@
     "test:debugger:android": "mocha --recursive --inspect-brk=0.0.0.0 bin/test --android",
     "test:debugger:ios": "mocha --recursive --inspect-brk=0.0.0.0 bin/test --ios",
     "tslint": "tslint -c tslint.json test/**/*.ts",
-    "publish": "npm publish --access=public"
+    "publish": "npm publish --access=public",
+    "eslint": "npx eslint --quiet ."
   },
   "repository": {
     "type": "git",
