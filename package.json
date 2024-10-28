@@ -30,7 +30,7 @@
     "test:debugger:ios": "mocha --recursive --inspect-brk=0.0.0.0 bin/test --ios",
     "tslint": "tslint -c tslint.json test/**/*.ts",
     "publish": "npm publish --access=public",
-    "eslint": "npx eslint --quiet ."
+    "eslint": "eslint --quiet ."
   },
   "repository": {
     "type": "git",
