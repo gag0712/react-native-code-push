@@ -60,6 +60,7 @@ class App extends Component<{}> {
 
   getUpdateMetadata() {
     CodePush.getUpdateMetadata(CodePush.UpdateState.RUNNING)
+      // eslint-disable-next-line no-undef
       .then((metadata: LocalPackage) => {
         this.setState({ syncMessage: metadata ? JSON.stringify(metadata) : "Running binary version", progress: false });
       }, (error: any) => {
@@ -157,6 +158,4 @@ const styles = StyleSheet.create({
  */
 let codePushOptions = { checkFrequency: CodePush.CheckFrequency.MANUAL };
 
-App = CodePush(codePushOptions)(App);
-
-export default App;
+export default CodePush(codePushOptions)(App);

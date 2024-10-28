@@ -5,14 +5,14 @@
  *
  */
 
-var spawn = require('child_process').spawn;
-var util = require('util');
-var AssertionError = require('assert').AssertionError;
+let spawn = require('child_process').spawn;
+let util = require('util');
+let AssertionError = require('assert').AssertionError;
 
 function chain (context) {
   return {
     expect: function (expectation) {
-      var _expect = function _expect (data) {
+      let _expect = function _expect (data) {
         return testExpectation(data, expectation);
       };
 
@@ -25,8 +25,8 @@ function chain (context) {
       return chain(context);
     },
     wait: function (expectation, callback) {
-      var _wait = function _wait (data) {
-        var val = testExpectation(data, expectation);
+      let _wait = function _wait (data) {
+        let val = testExpectation(data, expectation);
         if (val === true && typeof callback === 'function') {
           callback(data);
         }
@@ -41,7 +41,7 @@ function chain (context) {
       return chain(context);
     },
     sendline: function (line) {
-      var _sendline = function _sendline () {
+      let _sendline = function _sendline () {
         context.process.stdin.write(line + '\n');
 
         if (context.verbose) {
@@ -56,7 +56,7 @@ function chain (context) {
       return chain(context);
     },
     sendEof: function() {
-      var _sendEof = function _sendEof () {
+      let _sendEof = function _sendEof () {
         context.process.stdin.destroy();
       };
       _sendEof.shift = true;
@@ -66,7 +66,7 @@ function chain (context) {
       return chain(context);
     },
     run: function (callback) {
-      var errState = null,
+      let errState = null,
           responded = false,
           stdout = [],
           options;
@@ -127,7 +127,7 @@ function chain (context) {
       // function run had `name`.
       //
       function evalContext (data, name) {
-        var currentFn = context.queue[0];
+        let currentFn = context.queue[0];
 
         if (!currentFn || (name === '_expect' && currentFn.name === '_expect')) {
           //
@@ -171,7 +171,7 @@ function chain (context) {
           currentFn();
 
           // Evaluate the next function if it does not need input
-          var nextFn = context.queue[0];
+          let nextFn = context.queue[0];
           if (nextFn && !nextFn.requiresInput)
             evalContext(data);
         }
@@ -198,7 +198,7 @@ function chain (context) {
           data = data.toLowerCase();
         }
 
-        var lines = data.split('\n').filter(function (line) { return line.length > 0; });
+        let lines = data.split('\n').filter(function (line) { return line.length > 0; });
         stdout = stdout.concat(lines);
 
         while (lines.length > 0) {
@@ -213,7 +213,7 @@ function chain (context) {
       // `context.queue` and responds to the `callback` accordingly.
       //
       function flushQueue () {
-        var remainingQueue = context.queue.slice(),
+        let remainingQueue = context.queue.slice(),
             currentFn = context.queue.shift(),
             lastLine = stdout[stdout.length - 1];
 
@@ -322,8 +322,8 @@ function testExpectation(data, expectation) {
 }
 
 function createUnexpectedEndError(message, remainingQueue) {
-  var desc = remainingQueue.map(function(it) { return it.description; });
-  var msg = message + '\n' + desc.join('\n');
+  let desc = remainingQueue.map(function(it) { return it.description; });
+  let msg = message + '\n' + desc.join('\n');
   return new AssertionError({
     message: msg,
     expected: [],
@@ -332,13 +332,13 @@ function createUnexpectedEndError(message, remainingQueue) {
 }
 
 function createExpectationError(expected, actual) {
-  var expectation;
+  let expectation;
   if (util.isRegExp(expected))
     expectation = 'to match ' + expected;
   else
     expectation = 'to contain ' + JSON.stringify(expected);
 
-  var err = new AssertionError({
+  let err = new AssertionError({
     message: util.format('expected %j %s', actual, expectation),
     actual: actual,
     expected: expected
@@ -368,6 +368,7 @@ function nspawn (command, params, options) {
   }
 
   options = options || {};
+  // eslint-disable-next-line no-global-assign
   context = {
     command: command,
     cwd: options.cwd || undefined,
