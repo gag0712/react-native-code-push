@@ -368,6 +368,7 @@ function nspawn (command, params, options) {
   }
 
   options = options || {};
+  // eslint-disable-next-line no-global-assign
   context = {
     command: command,
     cwd: options.cwd || undefined,
