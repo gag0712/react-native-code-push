@@ -48,6 +48,9 @@ function findLatestRelease(releaseHistory) {
     return Number(latestReleaseVersion) < Number(runtimeVersion);
   }
   
+  /**
+   * @type {Versioning}
+   */
   export const IncrementalVersioning = {
     findLatestRelease,
     checkIsMandatory,

@@ -22,7 +22,7 @@ function findLatestRelease(releaseHistory) {
   /**
    * check if the update is mandatory
    * @param {ReleaseVersion} runtimeVersion
-   * @param {ReleaseHist oryInterface} releaseHistory
+   * @param {ReleaseHistoryInterface} releaseHistory
    * @return {boolean}
    */
   function checkIsMandatory(runtimeVersion, releaseHistory) {
@@ -51,6 +51,9 @@ function findLatestRelease(releaseHistory) {
     return Semver.lt(latestReleaseVersion, runtimeVersion);
   }
   
+  /**
+   * @type {Versioning}
+   */
   export const SemverVersioning = {
     findLatestRelease,
     checkIsMandatory,

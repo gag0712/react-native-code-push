@@ -79,8 +79,20 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           const runtimeVersion = sharedCodePushOptions.runtimeVersion;
 
           // TODO: Support for full customization
-          const versionMode = sharedCodePushOptions.versionMode;
-          const Versioning = versionMode === 'semver' ? SemverVersioning : IncrementalVersioning;
+          const versioningMode = sharedCodePushOptions.versioningMode;
+          const Versioning = (() => {
+            if (versioningMode === 'semver') {
+              return SemverVersioning;
+            }
+            if (versioningMode === 'incremental') {
+              return IncrementalVersioning;
+            }
+            if (versioningMode === 'custom' && sharedCodePushOptions.customVersioning) {
+              return sharedCodePushOptions.customVersioning
+            }
+
+            throw new Error('No versioning object is defined');
+          })()
 
           const [latestReleaseVersion ,latestReleaseInfo] = Versioning.findLatestRelease(releaseHistory);
           const isMandatory = Versioning.checkIsMandatory(runtimeVersion, latestReleaseVersion);
@@ -628,8 +640,10 @@ let CodePush;
  *   setUpdateChecker(updateCheckerFunction: updateChecker): void,
  *   runtimeVersion: string,
  *   setRuntimeVersion(version: string): void,
- *   versionMode: VersionMode
- *   setVersionMode: (versionMode: VersionMode): void
+ *   versioningMode: VersioningMode
+ *   setVersioningMode: (versioningMode: VersioningMode): void
+ *   customVersioning: Versioning
+ *   setCustomVersioning: (versioning: Versioning): void
  *   fallbackToAppCenter: boolean,
  *   setFallbackToAppCenter(enable: boolean): void
  * }}
@@ -648,9 +662,13 @@ const sharedCodePushOptions = {
     // TODO: validation Semver / Incremental Format
     this.runtimeVersion = version;
   },
-  versionMode: 'semver',
-  setVersionMode(mode) {
+  versioningMode: 'semver',
+  setVersioningMode(mode) {
     this.mode = mode
+  },
+  customVersioning: undefined,
+  setCustomVersioning(versioning) {
+    this.customVersioning = versioning
   },
   updateChecker: undefined,
   setUpdateChecker(updateCheckerFunction) {

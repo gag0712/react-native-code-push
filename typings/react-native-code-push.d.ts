@@ -13,8 +13,13 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
-// TODO: support for full customization
-export type VersionMode = 'semver' | 'incremental';
+export type VersioningMode = 'semver' | 'incremental' | 'custom';
+
+export type Versioning = {
+    findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
+    checkIsMandatory: (runtimeVersion: ReleaseVersion, releaseHistory: ReleaseHistoryInterface) => boolean;
+    shouldRollback: (runtimeVersion: ReleaseVersion, latestReleaseVersion: ReleaseVersion) => boolean;
+}
 
 /**
  * Alias for a string representing a released CodePush update version.
