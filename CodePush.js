@@ -700,6 +700,8 @@ function codePushify(options = {}) {
     );
   }
 
+  sharedCodePushOptions.setVersioningMode(options.versioningMode);
+  sharedCodePushOptions.setCustomVersioning(options.customVersioning);
   sharedCodePushOptions.setBundleHost(options.bundleHost);
   sharedCodePushOptions.setRuntimeVersion(options.runtimeVersion);
   sharedCodePushOptions.setUpdateChecker(options.updateChecker);
