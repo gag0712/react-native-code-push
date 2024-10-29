@@ -78,7 +78,6 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
            */
           const runtimeVersion = sharedCodePushOptions.runtimeVersion;
 
-          // TODO: Support for full customization
           const versioningMode = sharedCodePushOptions.versioningMode;
           const Versioning = (() => {
             if (versioningMode === 'semver') {
