@@ -22,7 +22,7 @@ export class Versioning {
 /**
  * Alias for a string representing a released CodePush update version.
  */
-type ReleaseVersion = string;
+export type ReleaseVersion = string;
 
 /**
  * The interface representing the release information that the `updateChecker` function must return.
@@ -393,10 +393,10 @@ declare namespace CodePush {
      */
     function sync(options?: SyncOptions, syncStatusChangedCallback?: SyncStatusChangedCallback, downloadProgressCallback?: DownloadProgressCallback, handleBinaryVersionMismatchCallback?: HandleBinaryVersionMismatchCallback): Promise<SyncStatus>;
 
-    const Versioning: {
-        BASE: Versioning,
-        SEMVER: Versioning,
-        INCREMENTAL: Versioning,
+    const VERSIONING: {
+        BASE: typeof Versioning,
+        SEMVER: typeof Versioning,
+        INCREMENTAL: typeof Versioning,
     }
 
     /**

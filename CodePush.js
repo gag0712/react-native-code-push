@@ -822,7 +822,7 @@ if (NativeCodePush) {
       delayInHours: 24,
       maxRetryAttempts: 1
     },
-    Versioning: {
+    VERSIONING: {
       BASE: BaseVersioning,
       SEMVER: SemverVersioning,
       INCREMENTAL: IncrementalVersioning,
