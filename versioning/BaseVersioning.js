@@ -1,5 +1,5 @@
 /**
- * @type {Versioning}
+ * @type {BaseVersioning}
  */
 export class BaseVersioning {
     constructor() {

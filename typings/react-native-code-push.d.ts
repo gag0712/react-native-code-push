@@ -13,7 +13,7 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
-export class Versioning {
+export abstract class BaseVersioning {
     static findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
     static checkIsMandatory: (runtimeVersion: ReleaseVersion, releaseHistory: ReleaseHistoryInterface) => boolean;
     static shouldRollback: (runtimeVersion: ReleaseVersion, latestReleaseVersion: ReleaseVersion) => boolean;
@@ -75,7 +75,7 @@ export interface CodePushOptions extends SyncOptions {
      * Specifies versioning policy.    
      * Defaults to `SemverVersioning`
      */
-    versioning?: Versioning;
+    versioning?: typeof BaseVersioning;
     /**
      * Specifies a function to get the release history.
      */
@@ -393,10 +393,10 @@ declare namespace CodePush {
      */
     function sync(options?: SyncOptions, syncStatusChangedCallback?: SyncStatusChangedCallback, downloadProgressCallback?: DownloadProgressCallback, handleBinaryVersionMismatchCallback?: HandleBinaryVersionMismatchCallback): Promise<SyncStatus>;
 
-    const VERSIONING: {
-        BASE: typeof Versioning,
-        SEMVER: typeof Versioning,
-        INCREMENTAL: typeof Versioning,
+    const Versioning: {
+        BASE: typeof BaseVersioning,
+        SEMVER: typeof BaseVersioning,
+        INCREMENTAL: typeof BaseVersioning,
     }
 
     /**
