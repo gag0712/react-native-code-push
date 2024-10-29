@@ -4,6 +4,8 @@ import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, Platform } from "react-native";
 import log from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
+import { SemverVersioning } from './manual/SemverVersioning'
+import { IncrementalVersioning } from "./manual/IncrementalVersioning";
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
 const PackageMixins = require("./package-mixins")(NativeCodePush);
@@ -76,33 +78,13 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
            */
           const runtimeVersion = sharedCodePushOptions.runtimeVersion;
 
+          // TODO: Support for full customization
+          const versionMode = sharedCodePushOptions.versionMode;
+          const Versioning = versionMode === 'semver' ? SemverVersioning : IncrementalVersioning;
 
-          // NOTE: It is not necessary to implement it in three steps. However, it is recommended to implement unit-test-friendly.
-          /**
-           * TODO 1: find latest release in releaseHistory
-           * @return {ReleaseInfo}
-           */
-          function findLatestRelease(releaseHistory) {}
-
-          /**
-           * TODO 2: check if the update is mandatory
-           * @return {boolean}
-           */
-          function checkIsMandatory(runtimeVersion, releaseHistory) {}
-
-          /**
-           * TODO 3: determine whether to rollback and execute it
-           * @return {boolean}
-           */
-          function shouldRollback(runtimeVersion, releaseHistory) {}
-          if (shouldRollback(runtimeVersion, releaseHistory)) {
-            // rollback
-          }
-
-          // NOTE: sample code
-          const update = findLatestRelease(releaseHistory);
-          const isMandatory = checkIsMandatory(runtimeVersion, update);
-
+          const [latestReleaseVersion ,latestReleaseInfo] = Versioning.findLatestRelease(releaseHistory);
+          const isMandatory = Versioning.checkIsMandatory(runtimeVersion, latestReleaseVersion);
+          const shouldRollback = Versioning.shouldRollback(runtimeVersion, releaseHistory)
 
           /**
            * Convert the update information decided from `ReleaseHistoryInterface` to be passed to the library core (original CodePush library).
@@ -110,11 +92,11 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
            * @type {UpdateCheckResponse} the interface required by the original CodePush library.
            */
           const updateInfo = {
-            download_url: update.downloadUrl,
+            download_url: latestReleaseInfo.downloadUrl,
             // (`enabled` will always be true in the release information obtained from the previous process.)
-            is_available: update.enabled,
-            package_hash: update.packageHash,
-            is_mandatory: isMandatory,
+            is_available: latestReleaseInfo.enabled,
+            package_hash: latestReleaseInfo.packageHash,
+            is_mandatory: isMandatory || shouldRollback,
             // 이건 항상 현재 실행중인 바이너리 버전을 전달한다.
             // 조회한 업데이트가 현재 바이너리를 타겟하는가? 를 API 서버에서 판단한 다음, 해당 된다면 런타임 바이너리 버전을 그대로 돌려주던 것임.
             // 우리는 updateChecker 조회 결과가 넘어왔다면 해당 정보는 현재 런타임 바이너리에 호환됨을 전제로 하고있음.
@@ -646,6 +628,8 @@ let CodePush;
  *   setUpdateChecker(updateCheckerFunction: updateChecker): void,
  *   runtimeVersion: string,
  *   setRuntimeVersion(version: string): void,
+ *   versionMode: VersionMode
+ *   setVersionMode: (versionMode: VersionMode): void
  *   fallbackToAppCenter: boolean,
  *   setFallbackToAppCenter(enable: boolean): void
  * }}
@@ -661,8 +645,12 @@ const sharedCodePushOptions = {
   },
   runtimeVersion: undefined,
   setRuntimeVersion(version) {
-    // TODO ? validation (if we require SemVer format)
+    // TODO: validation Semver / Incremental Format
     this.runtimeVersion = version;
+  },
+  versionMode: 'semver',
+  setVersionMode(mode) {
+    this.mode = mode
   },
   updateChecker: undefined,
   setUpdateChecker(updateCheckerFunction) {

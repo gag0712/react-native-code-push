@@ -13,6 +13,9 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
+// TODO: support for full customization
+export type VersionMode = 'semver' | 'incremental';
+
 /**
  * Alias for a string representing a released CodePush update version.
  */
