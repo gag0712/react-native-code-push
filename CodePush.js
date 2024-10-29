@@ -6,6 +6,7 @@ import log from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
 import { SemverVersioning } from './manual/SemverVersioning'
 import { IncrementalVersioning } from "./manual/IncrementalVersioning";
+import { BaseVersioning } from "./manual/BaseVersioning";
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
 const PackageMixins = require("./package-mixins")(NativeCodePush);
@@ -77,21 +78,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
            * @type {string}
            */
           const runtimeVersion = sharedCodePushOptions.runtimeVersion;
-
-          const versioningMode = sharedCodePushOptions.versioningMode;
-          const Versioning = (() => {
-            if (versioningMode === 'semver') {
-              return SemverVersioning;
-            }
-            if (versioningMode === 'incremental') {
-              return IncrementalVersioning;
-            }
-            if (versioningMode === 'custom' && sharedCodePushOptions.customVersioning) {
-              return sharedCodePushOptions.customVersioning
-            }
-
-            throw new Error('No versioning object is defined');
-          })()
+          const Versioning = sharedCodePushOptions.versioning;
 
           const [latestReleaseVersion ,latestReleaseInfo] = Versioning.findLatestRelease(releaseHistory);
           const isMandatory = Versioning.checkIsMandatory(runtimeVersion, latestReleaseVersion);
@@ -639,10 +626,8 @@ let CodePush;
  *   setUpdateChecker(updateCheckerFunction: updateChecker): void,
  *   runtimeVersion: string,
  *   setRuntimeVersion(version: string): void,
- *   versioningMode: VersioningMode
- *   setVersioningMode: (versioningMode: VersioningMode): void
- *   customVersioning: Versioning
- *   setCustomVersioning: (versioning: Versioning): void
+ *   versioning: Versioning
+ *   setVersioning: (versioning: Versioning): void
  *   fallbackToAppCenter: boolean,
  *   setFallbackToAppCenter(enable: boolean): void
  * }}
@@ -661,13 +646,12 @@ const sharedCodePushOptions = {
     // TODO: validation Semver / Incremental Format
     this.runtimeVersion = version;
   },
-  versioningMode: 'semver',
-  setVersioningMode(mode) {
-    this.mode = mode
-  },
-  customVersioning: undefined,
-  setCustomVersioning(versioning) {
-    this.customVersioning = versioning
+  versioning: undefined,
+  setVersioning(versioning) {
+    if (!(versioning instanceof BaseVersioning)) {
+      throw new Error('Versioning object must inherit class `BaseVersioning`')
+    }
+    this.versioning = versioning
   },
   updateChecker: undefined,
   setUpdateChecker(updateCheckerFunction) {
@@ -700,8 +684,7 @@ function codePushify(options = {}) {
     );
   }
 
-  sharedCodePushOptions.setVersioningMode(options.versioningMode ?? 'semver');
-  sharedCodePushOptions.setCustomVersioning(options.customVersioning);
+  sharedCodePushOptions.setVersioning(options.versioning ?? SemverVersioning);
   sharedCodePushOptions.setBundleHost(options.bundleHost);
   sharedCodePushOptions.setRuntimeVersion(options.runtimeVersion);
   sharedCodePushOptions.setUpdateChecker(options.updateChecker);
@@ -838,6 +821,11 @@ if (NativeCodePush) {
     DEFAULT_ROLLBACK_RETRY_OPTIONS: {
       delayInHours: 24,
       maxRetryAttempts: 1
+    },
+    Versioning: {
+      BASE: BaseVersioning,
+      SEMVER: SemverVersioning,
+      INCREMENTAL: IncrementalVersioning,
     }
   });
 } else {

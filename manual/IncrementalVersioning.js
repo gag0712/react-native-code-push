@@ -1,9 +1,7 @@
-/**
- * find latest release in releaseHistory
- * @param {ReleaseHistoryInterface} releaseHistory
- * @return {[ReleaseVersion, ReleaseInfo]}
- */
-function findLatestRelease(releaseHistory) {
+import { BaseVersioning } from "./BaseVersioning";
+  
+export class IncrementalVersioning extends BaseVersioning {
+  static findLatestRelease(releaseHistory) {
     const latestReleaseInfo = Object.entries(releaseHistory)
       .filter(([_, bundle]) => bundle.enabled)
       .sort(([v1], [v2]) => Number(v2) - Number(v1))
@@ -15,14 +13,8 @@ function findLatestRelease(releaseHistory) {
   
     return latestReleaseInfo;
   }
-  
-  /**
-   * check if the update is mandatory
-   * @param {ReleaseVersion} runtimeVersion
-   * @param {ReleaseHist oryInterface} releaseHistory
-   * @return {boolean}
-   */
-  function checkIsMandatory(runtimeVersion, releaseHistory) {
+
+  static checkIsMandatory(runtimeVersion, releaseHistory) {
     const sortedMandatoryReleases = Object.entries(releaseHistory)
       .filter(([_, bundle]) => bundle.enabled)
       .sort(([v1], [v2]) => Number(v2) - Number(v1))
@@ -36,24 +28,9 @@ function findLatestRelease(releaseHistory) {
     const [latestMandatoryVersion, _] = sortedMandatoryReleases[0];
     return Number(latestMandatoryVersion) > Number(runtimeVersion);
   }
-  
-  /**
-   * determine whether to rollback and execute it
-   * @param {ReleaseVersion} runtimeVersion
-   * @param {ReleaseVersion} latestReleaseVersion
-   * @return {boolean}
-   */
-  function shouldRollback(runtimeVersion, latestReleaseVersion) {
+
+  static shouldRollback(runtimeVersion, latestReleaseVersion) {
     // Latest version is less than installed version = Rollback -> mandatory
     return Number(latestReleaseVersion) < Number(runtimeVersion);
   }
-  
-  /**
-   * @type {Versioning}
-   */
-  export const IncrementalVersioning = {
-    findLatestRelease,
-    checkIsMandatory,
-    shouldRollback,
-  };
-  
+}

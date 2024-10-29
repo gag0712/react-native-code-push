@@ -13,9 +13,7 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
-export type VersioningMode = 'semver' | 'incremental' | 'custom';
-
-export type Versioning = {
+export interface Versioning {
     findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
     checkIsMandatory: (runtimeVersion: ReleaseVersion, releaseHistory: ReleaseHistoryInterface) => boolean;
     shouldRollback: (runtimeVersion: ReleaseVersion, latestReleaseVersion: ReleaseVersion) => boolean;
@@ -74,16 +72,10 @@ export interface CodePushOptions extends SyncOptions {
      */
     runtimeVersion: string;
     /**
-     * Specifies which versioning mode to use.    
-     * You should provide `customVersioning` option if you want to use `"custom"` versioning mode.    
-     * Defaults to `"semver"`
+     * Specifies versioning policy.    
+     * Defaults to `SemverVersioning`
      */
-    versioningMode?: VersioningMode;
-    /**
-     * Specifies custom versioning policy.    
-     * Custom versioning is applied only when `versioningMode` is `"custom"`.
-     */
-    customVersioning?: Versioning;
+    versioning?: Versioning;
     /**
      * Specifies a function to get the release history.
      */
@@ -400,6 +392,12 @@ declare namespace CodePush {
      * @param handleBinaryVersionMismatchCallback An optional callback for handling target binary version mismatch
      */
     function sync(options?: SyncOptions, syncStatusChangedCallback?: SyncStatusChangedCallback, downloadProgressCallback?: DownloadProgressCallback, handleBinaryVersionMismatchCallback?: HandleBinaryVersionMismatchCallback): Promise<SyncStatus>;
+
+    const Versioning: {
+        BASE: Versioning,
+        SEMVER: Versioning,
+        INCREMENTAL: Versioning,
+    }
 
     /**
      * Indicates when you would like an installed update to actually be applied.
