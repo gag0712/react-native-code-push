@@ -75,14 +75,15 @@ export interface CodePushOptions extends SyncOptions {
     runtimeVersion: string;
     /**
      * Specifies which versioning mode to use.    
-     * You should provide `customVersioning` option if you want to use `"custom"` versioning mode.
+     * You should provide `customVersioning` option if you want to use `"custom"` versioning mode.    
+     * Defaults to `"semver"`
      */
-    versioningMode: VersioningMode;
+    versioningMode?: VersioningMode;
     /**
      * Specifies custom versioning policy.    
      * Custom versioning is applied only when `versioningMode` is `"custom"`.
      */
-    customVersioning: Versioning;
+    customVersioning?: Versioning;
     /**
      * Specifies a function to get the release history.
      */
