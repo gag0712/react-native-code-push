@@ -32,7 +32,6 @@ describe('Semver Versioning Test', () => {
                 const RUNTIME_VERSION = '1.0.0';
                 const RELEASED_BUNDLES = {
                     '1.0.0': FIRST_RELEASE_INFO,
-                    // 소프트 배포 없음
                 };
         
                 expect(SemverVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(false);
