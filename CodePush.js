@@ -4,9 +4,9 @@ import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, Platform } from "react-native";
 import log from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
-import { SemverVersioning } from './manual/SemverVersioning'
-import { IncrementalVersioning } from "./manual/IncrementalVersioning";
-import { BaseVersioning } from "./manual/BaseVersioning";
+import { SemverVersioning } from './versioning/SemverVersioning'
+import { IncrementalVersioning } from "./versioning/IncrementalVersioning";
+import { BaseVersioning } from "./versioning/BaseVersioning";
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
 const PackageMixins = require("./package-mixins")(NativeCodePush);
