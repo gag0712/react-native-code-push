@@ -52,6 +52,7 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "^14.0.27",
     "@types/q": "^1.5.4",
+    "@types/semver": "^7.5.8",
     "archiver": "latest",
     "body-parser": "latest",
     "code-push-plugin-testing-framework": "file:./code-push-plugin-testing-framework",
