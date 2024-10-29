@@ -24,6 +24,29 @@ describe('Incremental Versioning Test', () => {
                 { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' }
             ])
         })
+
+        it('should ignore not-enabled bundles and return latest release', () => {
+            const RELEASED_BUNDLES_1 = {
+                '1': { enabled: true, mandatory: false, downloadUrl: 'R1', packageHash: 'P1' },
+                '2': { enabled: false, mandatory: false, downloadUrl: 'R2', packageHash: 'P2' },
+            };
+
+            const RELEASED_BUNDLES_2 = {
+                '1': { enabled: true, mandatory: false, downloadUrl: 'R1', packageHash: 'P1' },
+                '2': { enabled: false, mandatory: false, downloadUrl: 'R2', packageHash: 'P2' },
+                '3': { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' },
+            };
+
+            expect(IncrementalVersioning.findLatestRelease(RELEASED_BUNDLES_1)).toEqual([
+                '1',
+                { enabled: true, mandatory: false, downloadUrl: 'R1', packageHash: 'P1' }
+            ])
+
+            expect(IncrementalVersioning.findLatestRelease(RELEASED_BUNDLES_2)).toEqual([
+                '3',
+                { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' }
+            ])
+        })
     })
 
     describe('checkIsMandatory', () => {
