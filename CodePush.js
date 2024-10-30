@@ -80,9 +80,16 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           const runtimeVersion = sharedCodePushOptions.runtimeVersion;
           const Versioning = sharedCodePushOptions.versioning;
 
-          const [latestReleaseVersion ,latestReleaseInfo] = Versioning.findLatestRelease(releaseHistory);
-          const isMandatory = Versioning.checkIsMandatory(runtimeVersion, latestReleaseVersion);
           const shouldRollback = Versioning.shouldRollback(runtimeVersion, releaseHistory)
+          if (shouldRollback) {
+            // Reset to latest major version and restart
+            CodePush.clearUpdates();
+            CodePush.allowRestart();
+            CodePush.restartApp();
+          }
+
+          const [latestReleaseVersion ,latestReleaseInfo] = Versioning.findLatestRelease(releaseHistory);
+          const isMandatory = shouldRollback || Versioning.checkIsMandatory(runtimeVersion, latestReleaseVersion);
 
           /**
            * Convert the update information decided from `ReleaseHistoryInterface` to be passed to the library core (original CodePush library).
@@ -94,7 +101,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
             // (`enabled` will always be true in the release information obtained from the previous process.)
             is_available: latestReleaseInfo.enabled,
             package_hash: latestReleaseInfo.packageHash,
-            is_mandatory: isMandatory || shouldRollback,
+            is_mandatory: isMandatory,
             // 이건 항상 현재 실행중인 바이너리 버전을 전달한다.
             // 조회한 업데이트가 현재 바이너리를 타겟하는가? 를 API 서버에서 판단한 다음, 해당 된다면 런타임 바이너리 버전을 그대로 돌려주던 것임.
             // 우리는 updateChecker 조회 결과가 넘어왔다면 해당 정보는 현재 런타임 바이너리에 호환됨을 전제로 하고있음.
