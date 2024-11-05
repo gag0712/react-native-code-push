@@ -9,7 +9,8 @@ describe('Semver Versioning Test', () => {
     describe('findLatestRelease', () => {
         it('should throw error when there is no releases', () => {
             const RELEASED_BUNDLES = {}
-            expect(() => SemverVersioning.findLatestRelease(RELEASED_BUNDLES)).toThrow("There is no latest release.")
+            expect(() => new SemverVersioning(RELEASED_BUNDLES).findLatestRelease())
+                .toThrow("There is no latest release.")
         })
 
         it('should return latest release', () => {
@@ -19,7 +20,7 @@ describe('Semver Versioning Test', () => {
                 '1.1.1': { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' },
             };
 
-            expect(SemverVersioning.findLatestRelease(RELEASED_BUNDLES)).toEqual([
+            expect(new SemverVersioning(RELEASED_BUNDLES).findLatestRelease(RELEASED_BUNDLES)).toEqual([
                 '1.1.1',
                 { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' }
             ])
@@ -37,12 +38,12 @@ describe('Semver Versioning Test', () => {
                 '1.1.1': { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' },
             };
 
-            expect(SemverVersioning.findLatestRelease(RELEASED_BUNDLES_1)).toEqual([
+            expect(new SemverVersioning(RELEASED_BUNDLES_1).findLatestRelease()).toEqual([
                 '1.0.0',
                 { enabled: true, mandatory: false, downloadUrl: 'R1', packageHash: 'P1' }
             ])
 
-            expect(SemverVersioning.findLatestRelease(RELEASED_BUNDLES_2)).toEqual([
+            expect(new SemverVersioning(RELEASED_BUNDLES_2).findLatestRelease()).toEqual([
                 '1.1.1',
                 { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' }
             ])
@@ -57,7 +58,7 @@ describe('Semver Versioning Test', () => {
                     '1.0.0': FIRST_RELEASE_INFO,
                 };
         
-                expect(SemverVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(false);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(false);
             });
         
             it('should consider not-mandatory when latest version is running', () => {
@@ -68,7 +69,7 @@ describe('Semver Versioning Test', () => {
                     '1.1.1': { enabled: true, mandatory: true, ...MOCK_INFOS },
                 };
         
-                expect(SemverVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(false);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(false);
             });
 
             it('should consider not-mandatory when only not-mandatory version is released', () => {
@@ -78,7 +79,7 @@ describe('Semver Versioning Test', () => {
                     '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 };
         
-                expect(SemverVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(false);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(false);
             });
 
             it('should consider not-mandatory when only not-mandatory version is released after current runtime version', () => {
@@ -89,7 +90,7 @@ describe('Semver Versioning Test', () => {
                     '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 };
         
-                expect(SemverVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(false);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(false);
             });
         })
 
@@ -101,7 +102,7 @@ describe('Semver Versioning Test', () => {
                     '1.0.1': { enabled: true, mandatory: true, ...MOCK_INFOS },
                 };
         
-                expect(SemverVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(true);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(true);
             });
         })
 
@@ -114,10 +115,10 @@ describe('Semver Versioning Test', () => {
                     '1.2.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 };
 
-                expect(SemverVersioning.checkIsMandatory('1.0.0', RELEASED_BUNDLES)).toBe(true);
-                expect(SemverVersioning.checkIsMandatory('1.0.1', RELEASED_BUNDLES)).toBe(false);
-                expect(SemverVersioning.checkIsMandatory('1.1.0', RELEASED_BUNDLES)).toBe(false);
-                expect(SemverVersioning.checkIsMandatory('1.2.0', RELEASED_BUNDLES)).toBe(false);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.0.0')).toBe(true);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.0.1')).toBe(false);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.1.0')).toBe(false);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.2.0')).toBe(false);
             });
         
             it('Major Release > Mandatory > Not-mandatory > Mandatory > Not-mandatory', () => {
@@ -129,38 +130,58 @@ describe('Semver Versioning Test', () => {
                     '1.2.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 };
 
-                expect(SemverVersioning.checkIsMandatory('1.0.0', RELEASED_BUNDLES)).toBe(true);
-                expect(SemverVersioning.checkIsMandatory('1.0.1', RELEASED_BUNDLES)).toBe(true);
-                expect(SemverVersioning.checkIsMandatory('1.1.0', RELEASED_BUNDLES)).toBe(true);
-                expect(SemverVersioning.checkIsMandatory('1.1.1', RELEASED_BUNDLES)).toBe(false);
-                expect(SemverVersioning.checkIsMandatory('1.2.0', RELEASED_BUNDLES)).toBe(false);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.0.0')).toBe(true);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.0.1')).toBe(true);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.1.0')).toBe(true);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.1.1')).toBe(false);
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.2.0')).toBe(false);
             });
         })
     })
 
     describe('shouldRollback', () => {
         it('should return true when latest version < current runtime version', () => {
+            const RELEASED_BUNDLES = {
+                '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+            };
             const currentVersion = '1.2.0'
-            const latestVersion = '1.1.0'
 
-            expect(SemverVersioning.shouldRollback(currentVersion, latestVersion)).toBe(true)
+            expect(new SemverVersioning(RELEASED_BUNDLES).shouldRollback(currentVersion)).toBe(true)
         })
     })
 
     describe('shouldRollbackToLatestMajorVersion', () => {
         it('should return false if it is not required to rollback', () => {
-            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.0.0', '1.0.0')).toBe(false)
-            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.1.0', '1.2.0')).toBe(false)
+            const RELEASED_BUNDLES_1 = {
+                '1.0.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+            };
+            const RELEASED_BUNDLES_2 = {
+                '1.2.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+            };
+            expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToLatestMajorVersion('1.0.0')).toBe(false)
+            expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToLatestMajorVersion('1.1.0')).toBe(false)
         })
 
         it('should return true if the rollback version is the latest major version', () => {
-            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.2.0', '1.0.0')).toBe(true)
-            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.2.0-rc.2', '1.2.0-rc.0')).toBe(true)
+            const RELEASED_BUNDLES_1 = {
+                '1.0.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+            };
+            const RELEASED_BUNDLES_2 = {
+                '1.2.0-rc.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+            };
+            expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToLatestMajorVersion('1.2.0')).toBe(true)
+            expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToLatestMajorVersion('1.2.0-rc.2')).toBe(true)
         })
 
         it('should return false if the rollback version is not the latest major version', () => {
-            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.2.0', '1.0.1')).toBe(false)
-            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.2.0-rc.2', '1.2.0-rc.1')).toBe(false)
+            const RELEASED_BUNDLES_1 = {
+                '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+            };
+            const RELEASED_BUNDLES_2 = {
+                '1.2.0-rc.1': { enabled: true, mandatory: false, ...MOCK_INFOS },
+            };
+            expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToLatestMajorVersion('1.2.0')).toBe(false)
+            expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToLatestMajorVersion('1.2.0-rc.2')).toBe(false)
         })
     })
 })
