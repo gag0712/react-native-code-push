@@ -17,7 +17,9 @@ type SortingMethod = (a: [ReleaseVersion], b: [ReleaseVersion]) => number
 
 export abstract class BaseVersioning {
     constructor(releaseHistory: ReleaseHistoryInterface, sortingMethod?: SortingMethod)
-    get sortedMandatoryReleaseHistory(): [ReleaseVersion, ReleaseInfo];
+    protected originalReleaseHistory: ReleaseHistoryInterface;
+    protected sortedReleaseHistory(): [ReleaseVersion, ReleaseInfo];
+    protected get sortedMandatoryReleaseHistory(): [ReleaseVersion, ReleaseInfo];
     findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
     checkIsMandatory: (runtimeVersion: ReleaseVersion) => boolean;
     shouldRollback: (runtimeVersion: ReleaseVersion) => boolean;
