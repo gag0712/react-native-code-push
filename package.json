@@ -31,7 +31,7 @@
     "tslint": "tslint -c tslint.json test/**/*.ts",
     "publish": "npm publish --access=public",
     "eslint": "eslint --quiet .",
-    "jest": "jest manual/*"
+    "jest": "jest versioning/*"
   },
   "repository": {
     "type": "git",
