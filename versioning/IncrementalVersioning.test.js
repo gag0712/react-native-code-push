@@ -8,8 +8,12 @@ describe('Incremental Versioning Test', () => {
 
     describe('findLatestRelease', () => {
         it('should throw error when there is no releases', () => {
-            const RELEASED_BUNDLES = {}
-            expect(() => IncrementalVersioning.findLatestRelease(RELEASED_BUNDLES)).toThrow("There is no latest release.")
+            const RELEASED_BUNDLES_1 = {}
+            const RELEASED_BUNDLES_2 = {'1': { enabled: false, mandatory: false, downloadUrl: 'R1', packageHash: 'P1' }}
+            expect(() => new IncrementalVersioning(RELEASED_BUNDLES_1).findLatestRelease())
+                .toThrow("There is no latest release.")
+            expect(() => new IncrementalVersioning(RELEASED_BUNDLES_2).findLatestRelease())
+                .toThrow("There is no latest release.")
         })
 
         it('should return latest release', () => {
@@ -19,7 +23,7 @@ describe('Incremental Versioning Test', () => {
                 '3': { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' },
             };
 
-            expect(IncrementalVersioning.findLatestRelease(RELEASED_BUNDLES)).toEqual([
+            expect(new IncrementalVersioning(RELEASED_BUNDLES).findLatestRelease()).toEqual([
                 '3',
                 { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' }
             ])
@@ -37,12 +41,12 @@ describe('Incremental Versioning Test', () => {
                 '3': { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' },
             };
 
-            expect(IncrementalVersioning.findLatestRelease(RELEASED_BUNDLES_1)).toEqual([
+            expect(new IncrementalVersioning(RELEASED_BUNDLES_1).findLatestRelease()).toEqual([
                 '1',
                 { enabled: true, mandatory: false, downloadUrl: 'R1', packageHash: 'P1' }
             ])
 
-            expect(IncrementalVersioning.findLatestRelease(RELEASED_BUNDLES_2)).toEqual([
+            expect(new IncrementalVersioning(RELEASED_BUNDLES_2).findLatestRelease()).toEqual([
                 '3',
                 { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' }
             ])
@@ -57,7 +61,7 @@ describe('Incremental Versioning Test', () => {
                     '1': FIRST_RELEASE_INFO,
                 };
         
-                expect(IncrementalVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(false);
             });
         
             it('should consider not-mandatory when latest version is running', () => {
@@ -68,7 +72,7 @@ describe('Incremental Versioning Test', () => {
                     '3': { enabled: true, mandatory: true, ...MOCK_INFOS },
                 };
         
-                expect(IncrementalVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(false);
             });
 
             it('should consider not-mandatory when only not-mandatory version is released', () => {
@@ -78,7 +82,7 @@ describe('Incremental Versioning Test', () => {
                     '2': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 };
         
-                expect(IncrementalVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(false);
             });
 
             it('should consider not-mandatory when only not-mandatory version is released after current runtime version', () => {
@@ -89,7 +93,7 @@ describe('Incremental Versioning Test', () => {
                     '3': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 };
         
-                expect(IncrementalVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(false);
             });
         })
 
@@ -101,7 +105,7 @@ describe('Incremental Versioning Test', () => {
                     '2': { enabled: true, mandatory: true, ...MOCK_INFOS },
                 };
         
-                expect(IncrementalVersioning.checkIsMandatory(RUNTIME_VERSION, RELEASED_BUNDLES)).toBe(true);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(true);
             });
         })
 
@@ -114,10 +118,10 @@ describe('Incremental Versioning Test', () => {
                     '4': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 };
 
-                expect(IncrementalVersioning.checkIsMandatory('1', RELEASED_BUNDLES)).toBe(true);
-                expect(IncrementalVersioning.checkIsMandatory('2', RELEASED_BUNDLES)).toBe(false);
-                expect(IncrementalVersioning.checkIsMandatory('3', RELEASED_BUNDLES)).toBe(false);
-                expect(IncrementalVersioning.checkIsMandatory('4', RELEASED_BUNDLES)).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('1')).toBe(true);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('2')).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('3')).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('4')).toBe(false);
             });
 
             it('Major Release > Mandatory > Not-mandatory > Mandatory > Not-mandatory', () => {
@@ -129,21 +133,26 @@ describe('Incremental Versioning Test', () => {
                     '5': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 };
 
-                expect(IncrementalVersioning.checkIsMandatory('1', RELEASED_BUNDLES)).toBe(true);
-                expect(IncrementalVersioning.checkIsMandatory('2', RELEASED_BUNDLES)).toBe(true);
-                expect(IncrementalVersioning.checkIsMandatory('3', RELEASED_BUNDLES)).toBe(true);
-                expect(IncrementalVersioning.checkIsMandatory('4', RELEASED_BUNDLES)).toBe(false);
-                expect(IncrementalVersioning.checkIsMandatory('5', RELEASED_BUNDLES)).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('1')).toBe(true);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('2')).toBe(true);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('3')).toBe(true);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('4')).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('5')).toBe(false);
             });
         })
     })
 
     describe('shouldRollback', () => {
         it('should return true when latest version < current runtime version', () => {
+            const RELEASED_BUNDLES = {
+                '1': FIRST_RELEASE_INFO,
+            };
             const currentVersion = '2'
-            const latestVersion = '1'
 
-            expect(IncrementalVersioning.shouldRollback(currentVersion, latestVersion)).toBe(true)
+            expect(new IncrementalVersioning(RELEASED_BUNDLES).shouldRollback(currentVersion)).toBe(true)
         })
+    })
+
+    describe('shouldRollbackToLatestMajorVersion', () => {
     })
 })
