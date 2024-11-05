@@ -13,11 +13,15 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
+type SortingMethod = (a: [ReleaseVersion], b: [ReleaseVersion]) => number
+
 export abstract class BaseVersioning {
-    static findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
-    static checkIsMandatory: (runtimeVersion: ReleaseVersion, releaseHistory: ReleaseHistoryInterface) => boolean;
-    static shouldRollback: (runtimeVersion: ReleaseVersion, latestReleaseVersion: ReleaseVersion) => boolean;
-    static shouldRollbackToLatestMajorVersion: (runtimeVersion: ReleaseVersion, latestReleaseVersion: ReleaseVersion) => boolean;
+    constructor(releaseHistory: ReleaseHistoryInterface, sortingMethod?: SortingMethod)
+    get sortedMandatoryReleaseHistory(): [ReleaseVersion, ReleaseInfo];
+    findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
+    checkIsMandatory: (runtimeVersion: ReleaseVersion) => boolean;
+    shouldRollback: (runtimeVersion: ReleaseVersion) => boolean;
+    shouldRollbackToLatestMajorVersion: (runtimeVersion: ReleaseVersion) => boolean;
 }
 
 /**

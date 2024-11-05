@@ -2,48 +2,66 @@
  * @type {BaseVersioning}
  */
 export class BaseVersioning {
-    constructor() {
-        if (this.constructor == BaseVersioning) {
-            throw new Error("Abstract classes can't be instantiated.");
-        }
+  /**
+   * @param {ReleaseHistoryInterface} releaseHistory
+   * @param {SortingMethod} sortingMethod
+   */
+  constructor(releaseHistory, sortingMethod) {
+    if (this.constructor == BaseVersioning) {
+      throw new Error("Abstract classes can't be instantiated.");
+    }
+    if (releaseHistory == null) {
+      throw new Error("param releaseHistory is needed");
     }
 
-    /**
-     * find latest release in releaseHistory
-     * @param {ReleaseHistoryInterface} releaseHistory
-     * @return {[ReleaseVersion, ReleaseInfo]}
-     */
-    static findLatestRelease(releaseHistory) {
-        throw new Error('Method `findLatestRelease` is not implemented')
-    }
+    this.originalReleaseHistory = releaseHistory;
+    this.sortedReleaseHistory = Object.entries(releaseHistory).filter(
+      ([_, bundle]) => bundle.enabled
+    );
 
-    /**
-     * check if the update is mandatory
-     * @param {ReleaseVersion} runtimeVersion
-     * @param {ReleaseHist oryInterface} releaseHistory
-     * @return {boolean}
-     */
-    static checkIsMandatory(runtimeVersion, releaseHistory) {
-        throw new Error('Method `checkIsMandatory` is not implemented')
+    if (sortingMethod && typeof sortingMethod === "function") {
+      this.sortedReleaseHistory.sort(sortingMethod);
     }
+  }
 
-    /**
-     * determine whether to rollback and execute it
-     * @param {ReleaseVersion} runtimeVersion
-     * @param {ReleaseVersion} latestReleaseVersion
-     * @return {boolean}
-     */
-    static shouldRollback(runtimeVersion, latestReleaseVersion) {
-        throw new Error('Method `shouldRollback` is not implemented')
-    }
+  get sortedMandatoryReleaseHistory() {
+    return this.sortedReleaseHistory.filter(([_, bundle]) => bundle.mandatory);
+  }
 
-    /**
-     * determine whether to rollback and execute it
-     * @param {ReleaseVersion} runtimeVersion
-     * @param {ReleaseVersion} latestReleaseVersion
-     * @return {boolean}
-     */
-    static shouldRollbackToLatestMajorVersion(runtimeVersion, latestReleaseVersion) {
-        throw new Error('Method `shouldRollbackToLatestMajorVersion` is not implemented')
-    }
+  /**
+   * find latest release in releaseHistory
+   * @return {[ReleaseVersion, ReleaseInfo]}
+   */
+  findLatestRelease() {
+    throw new Error("Method `findLatestRelease` is not implemented");
+  }
+
+  /**
+   * check if the update is mandatory
+   * @param {ReleaseVersion} runtimeVersion
+   * @return {boolean}
+   */
+  checkIsMandatory(runtimeVersion) {
+    throw new Error("Method `checkIsMandatory` is not implemented");
+  }
+
+  /**
+   * determine whether to rollback and execute it
+   * @param {ReleaseVersion} runtimeVersion
+   * @return {boolean}
+   */
+  shouldRollback(runtimeVersion) {
+    throw new Error("Method `shouldRollback` is not implemented");
+  }
+
+  /**
+   * determine whether to rollback and execute it
+   * @param {ReleaseVersion} runtimeVersion
+   * @return {boolean}
+   */
+  shouldRollbackToLatestMajorVersion(runtimeVersion) {
+    throw new Error(
+      "Method `shouldRollbackToLatestMajorVersion` is not implemented"
+    );
+  }
 }
