@@ -146,4 +146,21 @@ describe('Semver Versioning Test', () => {
             expect(SemverVersioning.shouldRollback(currentVersion, latestVersion)).toBe(true)
         })
     })
+
+    describe('shouldRollbackToLatestMajorVersion', () => {
+        it('should return false if it is not required to rollback', () => {
+            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.0.0', '1.0.0')).toBe(false)
+            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.1.0', '1.2.0')).toBe(false)
+        })
+
+        it('should return true if the rollback version is the latest major version', () => {
+            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.2.0', '1.0.0')).toBe(true)
+            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.2.0-rc.2', '1.2.0-rc.0')).toBe(true)
+        })
+
+        it('should return false if the rollback version is not the latest major version', () => {
+            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.2.0', '1.0.1')).toBe(false)
+            expect(SemverVersioning.shouldRollbackToLatestMajorVersion('1.2.0-rc.2', '1.2.0-rc.1')).toBe(false)
+        })
+    })
 })
