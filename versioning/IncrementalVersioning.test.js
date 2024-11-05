@@ -154,5 +154,22 @@ describe('Incremental Versioning Test', () => {
     })
 
     describe('shouldRollbackToLatestMajorVersion', () => {
+        it('should return true when rollback version is the first major version', () => {
+            const RELEASED_BUNDLES = {
+                '1': FIRST_RELEASE_INFO,
+                '2': { enabled: false, mandatory: true, ...MOCK_INFOS },
+            };
+
+            expect(new IncrementalVersioning(RELEASED_BUNDLES).shouldRollbackToLatestMajorVersion('2')).toBe(true)
+        })
+
+        it('should return false when runtime version is the same as rollback version', () => {
+            const RELEASED_BUNDLES = {
+                '1': FIRST_RELEASE_INFO,
+                '2': { enabled: false, mandatory: true, ...MOCK_INFOS },
+            };
+
+            expect(new IncrementalVersioning(RELEASED_BUNDLES).shouldRollbackToLatestMajorVersion('1')).toBe(false)
+        })
     })
 })

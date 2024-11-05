@@ -156,6 +156,8 @@ describe('Semver Versioning Test', () => {
                 '1.0.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
             };
             const RELEASED_BUNDLES_2 = {
+                '1.0.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+                '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 '1.2.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
             };
             expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToLatestMajorVersion('1.0.0')).toBe(false)
@@ -175,9 +177,11 @@ describe('Semver Versioning Test', () => {
 
         it('should return false if the rollback version is not the latest major version', () => {
             const RELEASED_BUNDLES_1 = {
+                '1.0.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
             };
             const RELEASED_BUNDLES_2 = {
+                '1.2.0-rc.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 '1.2.0-rc.1': { enabled: true, mandatory: false, ...MOCK_INFOS },
             };
             expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToLatestMajorVersion('1.2.0')).toBe(false)
