@@ -14,14 +14,11 @@ export class BaseVersioning {
       throw new Error("param releaseHistory is needed");
     }
 
+    this.sortingMethod = sortingMethod ?? (() => 0);
     this.originalReleaseHistory = releaseHistory;
-    this.sortedReleaseHistory = Object.entries(releaseHistory).filter(
-      ([_, bundle]) => bundle.enabled
-    );
-
-    if (sortingMethod && typeof sortingMethod === "function") {
-      this.sortedReleaseHistory.sort(sortingMethod);
-    }
+    this.sortedReleaseHistory = Object.entries(releaseHistory)
+      .filter(([_, bundle]) => bundle.enabled)
+      .sort(this.sortingMethod);
   }
 
   get sortedMandatoryReleaseHistory() {
@@ -60,8 +57,16 @@ export class BaseVersioning {
    * @return {boolean}
    */
   shouldRollbackToLatestMajorVersion(runtimeVersion) {
-    throw new Error(
-      "Method `shouldRollbackToLatestMajorVersion` is not implemented"
+    const [latestReleaseVersion] = this.findLatestRelease();
+    const [firstMajorRelease] = Object.entries(this.originalReleaseHistory)
+      .sort(this.sortingMethod)
+      .reverse()
+      .at(0);
+
+    return (
+      runtimeVersion !== latestReleaseVersion &&
+      this.shouldRollback(runtimeVersion) &&
+      latestReleaseVersion === firstMajorRelease
     );
   }
 }

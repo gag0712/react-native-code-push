@@ -31,26 +31,4 @@ export class SemverVersioning extends BaseVersioning {
     const [latestReleaseVersion] = this.findLatestRelease();
     return Semver.lt(latestReleaseVersion, runtimeVersion);
   }
-
-  shouldRollbackToLatestMajorVersion(runtimeVersion) {
-    const [latestReleaseVersion] = this.findLatestRelease();
-
-    if (
-      runtimeVersion === latestReleaseVersion ||
-      !this.shouldRollback(runtimeVersion, latestReleaseVersion)
-    ) {
-      return false;
-    }
-
-    const parsed = Semver.parse(latestReleaseVersion);
-    const isPrereleaseVersion = parsed.prerelease.length > 0;
-
-    if (isPrereleaseVersion) {
-      // EX) Rollback when 1.1.0-rc.0
-      //     Not rollback when 1.1.0-rc.1, ...
-      return parsed.prerelease[parsed.prerelease.length - 1] === 0;
-    } else {
-      return parsed.version.endsWith(".0.0");
-    }
-  }
 }
