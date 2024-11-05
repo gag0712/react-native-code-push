@@ -80,15 +80,16 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           const runtimeVersion = sharedCodePushOptions.runtimeVersion;
           const Versioning = sharedCodePushOptions.versioning;
 
-          const shouldRollback = Versioning.shouldRollback(runtimeVersion, releaseHistory)
-          if (shouldRollback) {
+          const shouldRollbackToLatestMajorVersion = Versioning.shouldRollbackToLatestMajorVersion(runtimeVersion, latestReleaseVersion)
+          if (shouldRollbackToLatestMajorVersion) {
             // Reset to latest major version and restart
             CodePush.clearUpdates();
             CodePush.allowRestart();
             CodePush.restartApp();
           }
-
+          
           const [latestReleaseVersion ,latestReleaseInfo] = Versioning.findLatestRelease(releaseHistory);
+          const shouldRollback = Versioning.shouldRollback(runtimeVersion, releaseHistory)
           const isMandatory = shouldRollback || Versioning.checkIsMandatory(runtimeVersion, latestReleaseVersion);
 
           /**

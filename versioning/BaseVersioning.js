@@ -36,4 +36,14 @@ export class BaseVersioning {
     static shouldRollback(runtimeVersion, latestReleaseVersion) {
         throw new Error('Method `shouldRollback` is not implemented')
     }
+
+    /**
+     * determine whether to rollback and execute it
+     * @param {ReleaseVersion} runtimeVersion
+     * @param {ReleaseVersion} latestReleaseVersion
+     * @return {boolean}
+     */
+    static shouldRollbackToLatestMajorVersion(runtimeVersion, latestReleaseVersion) {
+        throw new Error('Method `shouldRollbackToLatestMajorVersion` is not implemented')
+    }
 }
