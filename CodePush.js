@@ -80,7 +80,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           const runtimeVersion = sharedCodePushOptions.runtimeVersion;
           const versioning = new sharedCodePushOptions.versioning(releaseHistory);
 
-          const shouldRollbackToLatestMajorVersion = versioning.shouldRollbackToLatestMajorVersion(runtimeVersion, latestReleaseVersion)
+          const shouldRollbackToLatestMajorVersion = versioning.shouldRollbackToLatestMajorVersion(runtimeVersion)
           if (shouldRollbackToLatestMajorVersion) {
             // Reset to latest major version and restart
             CodePush.clearUpdates();
@@ -88,9 +88,9 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
             CodePush.restartApp();
           }
           
-          const [latestReleaseVersion ,latestReleaseInfo] = versioning.findLatestRelease(releaseHistory);
-          const shouldRollback = versioning.shouldRollback(runtimeVersion, releaseHistory)
-          const isMandatory = shouldRollback || versioning.checkIsMandatory(runtimeVersion, latestReleaseVersion);
+          const [, latestReleaseInfo] = versioning.findLatestRelease();
+          const shouldRollback = versioning.shouldRollback(runtimeVersion)
+          const isMandatory = shouldRollback || versioning.checkIsMandatory(runtimeVersion);
 
           /**
            * Convert the update information decided from `ReleaseHistoryInterface` to be passed to the library core (original CodePush library).
