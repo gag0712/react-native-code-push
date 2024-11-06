@@ -23,7 +23,7 @@ export abstract class BaseVersioning {
     findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
     checkIsMandatory: (runtimeVersion: ReleaseVersion) => boolean;
     shouldRollback: (runtimeVersion: ReleaseVersion) => boolean;
-    shouldRollbackToLatestMajorVersion: (runtimeVersion: ReleaseVersion) => boolean;
+    shouldRollbackToBinary: (runtimeVersion: ReleaseVersion) => boolean;
 }
 
 /**

@@ -84,8 +84,8 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
            */
           const versioning = new sharedCodePushOptions.versioning(releaseHistory);
 
-          const shouldRollbackToLatestMajorVersion = versioning.shouldRollbackToLatestMajorVersion(runtimeVersion)
-          if (shouldRollbackToLatestMajorVersion) {
+          const shouldRollbackToBinary = versioning.shouldRollbackToBinary(runtimeVersion)
+          if (shouldRollbackToBinary) {
             // Reset to latest major version and restart
             CodePush.clearUpdates();
             CodePush.allowRestart();

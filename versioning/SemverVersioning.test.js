@@ -150,7 +150,7 @@ describe('Semver Versioning Test', () => {
         })
     })
 
-    describe('shouldRollbackToLatestMajorVersion', () => {
+    describe('shouldRollbackToBinary', () => {
         it('should return false if it is not required to rollback', () => {
             const RELEASED_BUNDLES_1 = {
                 '1.0.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
@@ -160,8 +160,8 @@ describe('Semver Versioning Test', () => {
                 '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 '1.2.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
             };
-            expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToLatestMajorVersion('1.0.0')).toBe(false)
-            expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToLatestMajorVersion('1.1.0')).toBe(false)
+            expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToBinary('1.0.0')).toBe(false)
+            expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToBinary('1.1.0')).toBe(false)
         })
 
         it('should return true if the rollback version is the latest major version', () => {
@@ -171,8 +171,8 @@ describe('Semver Versioning Test', () => {
             const RELEASED_BUNDLES_2 = {
                 '1.2.0-rc.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
             };
-            expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToLatestMajorVersion('1.2.0')).toBe(true)
-            expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToLatestMajorVersion('1.2.0-rc.2')).toBe(true)
+            expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToBinary('1.2.0')).toBe(true)
+            expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToBinary('1.2.0-rc.2')).toBe(true)
         })
 
         it('should return false if the rollback version is not the latest major version', () => {
@@ -184,8 +184,8 @@ describe('Semver Versioning Test', () => {
                 '1.2.0-rc.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 '1.2.0-rc.1': { enabled: true, mandatory: false, ...MOCK_INFOS },
             };
-            expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToLatestMajorVersion('1.2.0')).toBe(false)
-            expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToLatestMajorVersion('1.2.0-rc.2')).toBe(false)
+            expect(new SemverVersioning(RELEASED_BUNDLES_1).shouldRollbackToBinary('1.2.0')).toBe(false)
+            expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToBinary('1.2.0-rc.2')).toBe(false)
         })
     })
 })

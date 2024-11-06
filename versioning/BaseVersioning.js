@@ -62,7 +62,7 @@ export class BaseVersioning {
    * @param {ReleaseVersion} runtimeVersion
    * @return {boolean}
    */
-  shouldRollbackToLatestMajorVersion(runtimeVersion) {
+  shouldRollbackToBinary(runtimeVersion) {
     const [latestReleaseVersion] = this.findLatestRelease();
     const [firstMajorRelease] = Object.entries(this.originalReleaseHistory)
       .sort(this.sortingMethod)
