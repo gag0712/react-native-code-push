@@ -78,6 +78,10 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
            * @type {string}
            */
           const runtimeVersion = sharedCodePushOptions.runtimeVersion;
+
+          /**
+           * @type {BaseVersioning}
+           */
           const versioning = new sharedCodePushOptions.versioning(releaseHistory);
 
           const shouldRollbackToLatestMajorVersion = versioning.shouldRollbackToLatestMajorVersion(runtimeVersion)
@@ -401,7 +405,7 @@ function validateRollbackRetryOptions(rollbackRetryOptions) {
   return true;
 }
 
-var testConfig;
+let testConfig;
 
 // This function is only used for tests. Replaces the default SDK, configuration and native bridge
 function setUpTestDependencies(testSdk, providedTestConfig, testNativeBridge) {
