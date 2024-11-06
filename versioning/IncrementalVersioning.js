@@ -5,16 +5,6 @@ export class IncrementalVersioning extends BaseVersioning {
     super(releaseHistory, ([v1], [v2]) => Number(v2) - Number(v1));
   }
 
-  findLatestRelease() {
-    const latestReleaseInfo = this.sortedReleaseHistory.at(0);
-
-    if (!latestReleaseInfo) {
-      throw new Error("There is no latest release.");
-    }
-
-    return latestReleaseInfo;
-  }
-
   checkIsMandatory(runtimeVersion) {
     if (this.sortedMandatoryReleaseHistory.length === 0) {
       return false;

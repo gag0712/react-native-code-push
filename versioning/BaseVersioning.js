@@ -30,7 +30,13 @@ export class BaseVersioning {
    * @return {[ReleaseVersion, ReleaseInfo]}
    */
   findLatestRelease() {
-    throw new Error("Method `findLatestRelease` is not implemented");
+    const latestReleaseInfo = this.sortedReleaseHistory.at(0);
+
+    if (!latestReleaseInfo) {
+      throw new Error("There is no latest release.");
+    }
+
+    return latestReleaseInfo;
   }
 
   /**

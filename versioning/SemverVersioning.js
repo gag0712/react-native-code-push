@@ -6,16 +6,6 @@ export class SemverVersioning extends BaseVersioning {
     super(releaseHistory, ([v1], [v2]) => (Semver.gt(v1, v2) ? -1 : 1));
   }
 
-  findLatestRelease() {
-    const latestReleaseInfo = this.sortedReleaseHistory.at(0);
-
-    if (!latestReleaseInfo) {
-      throw new Error("There is no latest release.");
-    }
-
-    return latestReleaseInfo;
-  }
-
   checkIsMandatory(runtimeVersion) {
     if (this.sortedMandatoryReleaseHistory.length === 0) {
       return false;
