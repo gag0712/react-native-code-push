@@ -20,6 +20,7 @@ export abstract class BaseVersioning {
     protected originalReleaseHistory: ReleaseHistoryInterface;
     protected sortedReleaseHistory: [ReleaseVersion, ReleaseInfo][];
     protected get sortedMandatoryReleaseHistory(): [ReleaseVersion, ReleaseInfo][];
+    protected get sortedEnabledReleaseHistory(): [ReleaseVersion, ReleaseInfo][];
     findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
     checkIsMandatory: (runtimeVersion: ReleaseVersion) => boolean;
     shouldRollback: (runtimeVersion: ReleaseVersion) => boolean;

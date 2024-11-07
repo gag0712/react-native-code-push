@@ -16,13 +16,19 @@ export class BaseVersioning {
 
     this.sortingMethod = sortingMethod ?? (() => 0);
     this.originalReleaseHistory = releaseHistory;
-    this.sortedReleaseHistory = Object.entries(releaseHistory)
-      .filter(([_, bundle]) => bundle.enabled)
-      .sort(([a], [b]) => this.sortingMethod(a, b));
+    this.sortedReleaseHistory = Object.entries(releaseHistory).sort(
+      ([a], [b]) => this.sortingMethod(a, b)
+    );
+  }
+
+  get sortedEnabledReleaseHistory() {
+    return this.sortedReleaseHistory.filter(([_, bundle]) => bundle.enabled);
   }
 
   get sortedMandatoryReleaseHistory() {
-    return this.sortedReleaseHistory.filter(([_, bundle]) => bundle.mandatory);
+    return this.sortedEnabledReleaseHistory.filter(
+      ([_, bundle]) => bundle.mandatory
+    );
   }
 
   /**
@@ -30,7 +36,7 @@ export class BaseVersioning {
    * @return {[ReleaseVersion, ReleaseInfo]}
    */
   findLatestRelease() {
-    const latestReleaseInfo = this.sortedReleaseHistory.at(0);
+    const latestReleaseInfo = this.sortedEnabledReleaseHistory.at(0);
 
     if (!latestReleaseInfo) {
       throw new Error("There is no latest release.");
@@ -80,10 +86,7 @@ export class BaseVersioning {
    */
   shouldRollbackToBinary(runtimeVersion) {
     const [latestReleaseVersion] = this.findLatestRelease();
-    const firstMajorRelease = Object.keys(this.originalReleaseHistory)
-      .sort(this.sortingMethod)
-      .reverse()
-      .at(0);
+    const [firstMajorRelease] = this.sortedReleaseHistory.at(-1);
 
     return (
       runtimeVersion !== latestReleaseVersion &&
