@@ -20,7 +20,7 @@ describe('Semver Versioning Test', () => {
                 '1.1.1': { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' },
             };
 
-            expect(new SemverVersioning(RELEASED_BUNDLES).findLatestRelease(RELEASED_BUNDLES)).toEqual([
+            expect(new SemverVersioning(RELEASED_BUNDLES).findLatestRelease()).toEqual([
                 '1.1.1',
                 { enabled: true, mandatory: true, downloadUrl: 'R3', packageHash: 'P3' }
             ])
