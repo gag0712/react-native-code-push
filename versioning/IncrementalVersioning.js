@@ -10,7 +10,7 @@ export class IncrementalVersioning extends BaseVersioning {
       return false;
     }
 
-    // When latest mandatory version >= current version -> mandatory
+    // When latest mandatory version > current version -> mandatory
     const [latestMandatoryVersion, _] = this.sortedMandatoryReleaseHistory[0];
     return Number(latestMandatoryVersion) > Number(runtimeVersion);
   }
