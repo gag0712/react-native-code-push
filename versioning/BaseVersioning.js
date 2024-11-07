@@ -58,7 +58,8 @@ export class BaseVersioning {
   }
 
   /**
-   * determine whether to rollback and execute it
+   * Determine whether to clear the currently running bundle.
+   * If it returns true, the CodePush bundle will be erased, and the app will restart.
    * @param {ReleaseVersion} runtimeVersion
    * @return {boolean}
    */
