@@ -638,7 +638,7 @@ let CodePush;
  *   runtimeVersion: string,
  *   setRuntimeVersion(version: string): void,
  *   versioning: Versioning
- *   setVersioning: (versioning: Versioning): void
+ *   setVersioning(versioning: Versioning): void
  *   fallbackToAppCenter: boolean,
  *   setFallbackToAppCenter(enable: boolean): void
  * }}
