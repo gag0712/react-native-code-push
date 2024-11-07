@@ -4,6 +4,9 @@ import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, Platform } from "react-native";
 import log from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
+import { SemverVersioning } from './versioning/SemverVersioning'
+import { IncrementalVersioning } from "./versioning/IncrementalVersioning";
+import { BaseVersioning } from "./versioning/BaseVersioning";
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
 const PackageMixins = require("./package-mixins")(NativeCodePush);
@@ -76,33 +79,21 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
            */
           const runtimeVersion = sharedCodePushOptions.runtimeVersion;
 
-
-          // NOTE: It is not necessary to implement it in three steps. However, it is recommended to implement unit-test-friendly.
           /**
-           * TODO 1: find latest release in releaseHistory
-           * @return {ReleaseInfo}
+           * @type {BaseVersioning}
            */
-          function findLatestRelease(releaseHistory) {}
+          const versioning = new sharedCodePushOptions.versioning(releaseHistory);
 
-          /**
-           * TODO 2: check if the update is mandatory
-           * @return {boolean}
-           */
-          function checkIsMandatory(runtimeVersion, releaseHistory) {}
-
-          /**
-           * TODO 3: determine whether to rollback and execute it
-           * @return {boolean}
-           */
-          function shouldRollback(runtimeVersion, releaseHistory) {}
-          if (shouldRollback(runtimeVersion, releaseHistory)) {
-            // rollback
+          const shouldRollbackToBinary = versioning.shouldRollbackToBinary(runtimeVersion)
+          if (shouldRollbackToBinary) {
+            // Reset to latest major version and restart
+            CodePush.clearUpdates();
+            CodePush.allowRestart();
+            CodePush.restartApp();
           }
-
-          // NOTE: sample code
-          const update = findLatestRelease(releaseHistory);
-          const isMandatory = checkIsMandatory(runtimeVersion, update);
-
+          
+          const [, latestReleaseInfo] = versioning.findLatestRelease();
+          const isMandatory = versioning.checkIsMandatory(runtimeVersion);
 
           /**
            * Convert the update information decided from `ReleaseHistoryInterface` to be passed to the library core (original CodePush library).
@@ -110,10 +101,10 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
            * @type {UpdateCheckResponse} the interface required by the original CodePush library.
            */
           const updateInfo = {
-            download_url: update.downloadUrl,
+            download_url: latestReleaseInfo.downloadUrl,
             // (`enabled` will always be true in the release information obtained from the previous process.)
-            is_available: update.enabled,
-            package_hash: update.packageHash,
+            is_available: latestReleaseInfo.enabled,
+            package_hash: latestReleaseInfo.packageHash,
             is_mandatory: isMandatory,
             // 이건 항상 현재 실행중인 바이너리 버전을 전달한다.
             // 조회한 업데이트가 현재 바이너리를 타겟하는가? 를 API 서버에서 판단한 다음, 해당 된다면 런타임 바이너리 버전을 그대로 돌려주던 것임.
@@ -413,7 +404,7 @@ function validateRollbackRetryOptions(rollbackRetryOptions) {
   return true;
 }
 
-var testConfig;
+let testConfig;
 
 // This function is only used for tests. Replaces the default SDK, configuration and native bridge
 function setUpTestDependencies(testSdk, providedTestConfig, testNativeBridge) {
@@ -646,6 +637,8 @@ let CodePush;
  *   setUpdateChecker(updateCheckerFunction: updateChecker): void,
  *   runtimeVersion: string,
  *   setRuntimeVersion(version: string): void,
+ *   versioning: Versioning
+ *   setVersioning(versioning: Versioning): void
  *   fallbackToAppCenter: boolean,
  *   setFallbackToAppCenter(enable: boolean): void
  * }}
@@ -661,8 +654,15 @@ const sharedCodePushOptions = {
   },
   runtimeVersion: undefined,
   setRuntimeVersion(version) {
-    // TODO ? validation (if we require SemVer format)
+    // TODO: validation Semver / Incremental Format
     this.runtimeVersion = version;
+  },
+  versioning: undefined,
+  setVersioning(versioning) {
+    if (!(versioning instanceof BaseVersioning)) {
+      throw new Error('Versioning object must inherit class `BaseVersioning`')
+    }
+    this.versioning = versioning
   },
   updateChecker: undefined,
   setUpdateChecker(updateCheckerFunction) {
@@ -695,6 +695,7 @@ function codePushify(options = {}) {
     );
   }
 
+  sharedCodePushOptions.setVersioning(options.versioning ?? SemverVersioning);
   sharedCodePushOptions.setBundleHost(options.bundleHost);
   sharedCodePushOptions.setRuntimeVersion(options.runtimeVersion);
   sharedCodePushOptions.setUpdateChecker(options.updateChecker);
@@ -831,6 +832,11 @@ if (NativeCodePush) {
     DEFAULT_ROLLBACK_RETRY_OPTIONS: {
       delayInHours: 24,
       maxRetryAttempts: 1
+    },
+    Versioning: {
+      BASE: BaseVersioning,
+      SEMVER: SemverVersioning,
+      INCREMENTAL: IncrementalVersioning,
     }
   });
 } else {

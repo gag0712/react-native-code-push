@@ -10,6 +10,7 @@ export default [
     ...globals.node,
     ...globals.mocha,
     ...globals.browser,
+    ...globals.jest
   } }},
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,

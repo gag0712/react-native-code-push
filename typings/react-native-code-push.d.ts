@@ -13,10 +13,24 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
+type SortingMethod = (a: ReleaseVersion, b: ReleaseVersion) => number
+
+export abstract class BaseVersioning {
+    constructor(releaseHistory: ReleaseHistoryInterface, sortingMethod?: SortingMethod)
+    protected originalReleaseHistory: ReleaseHistoryInterface;
+    protected sortedReleaseHistory: [ReleaseVersion, ReleaseInfo][];
+    protected get sortedMandatoryReleaseHistory(): [ReleaseVersion, ReleaseInfo][];
+    protected get sortedEnabledReleaseHistory(): [ReleaseVersion, ReleaseInfo][];
+    protected shouldRollback: (runtimeVersion: ReleaseVersion) => boolean;
+    findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
+    checkIsMandatory: (runtimeVersion: ReleaseVersion) => boolean;
+    shouldRollbackToBinary: (runtimeVersion: ReleaseVersion) => boolean;
+}
+
 /**
  * Alias for a string representing a released CodePush update version.
  */
-type ReleaseVersion = string;
+export type ReleaseVersion = string;
 
 /**
  * The interface representing the release information that the `updateChecker` function must return.
@@ -65,6 +79,11 @@ export interface CodePushOptions extends SyncOptions {
      * It can be the version from package.json (or another source).
      */
     runtimeVersion: string;
+    /**
+     * Specifies versioning policy.    
+     * Defaults to `SemverVersioning`
+     */
+    versioning?: typeof BaseVersioning;
     /**
      * Specifies a function to get the release history.
      */
@@ -381,6 +400,12 @@ declare namespace CodePush {
      * @param handleBinaryVersionMismatchCallback An optional callback for handling target binary version mismatch
      */
     function sync(options?: SyncOptions, syncStatusChangedCallback?: SyncStatusChangedCallback, downloadProgressCallback?: DownloadProgressCallback, handleBinaryVersionMismatchCallback?: HandleBinaryVersionMismatchCallback): Promise<SyncStatus>;
+
+    const Versioning: {
+        BASE: typeof BaseVersioning,
+        SEMVER: typeof BaseVersioning,
+        INCREMENTAL: typeof BaseVersioning,
+    }
 
     /**
      * Indicates when you would like an installed update to actually be applied.
