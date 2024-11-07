@@ -165,7 +165,7 @@ describe('Incremental Versioning Test', () => {
     })
 
     describe('shouldRollbackToBinary', () => {
-        it('should return true when rollback version is the first major version', () => {
+        it('should return true when destination version is the first major version', () => {
             const RELEASED_BUNDLES = {
                 '1': FIRST_RELEASE_INFO,
                 '2': { enabled: false, mandatory: true, ...MOCK_INFOS },
@@ -174,7 +174,7 @@ describe('Incremental Versioning Test', () => {
             expect(new IncrementalVersioning(RELEASED_BUNDLES).shouldRollbackToBinary('2')).toBe(true)
         })
 
-        it('should return false when runtime version is the same as rollback version', () => {
+        it('should return false when runtime version is the same as destination version', () => {
             const RELEASED_BUNDLES = {
                 '1': FIRST_RELEASE_INFO,
                 '2': { enabled: false, mandatory: true, ...MOCK_INFOS },

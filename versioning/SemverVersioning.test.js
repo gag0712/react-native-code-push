@@ -175,7 +175,7 @@ describe('Semver Versioning Test', () => {
             expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToBinary('1.1.0')).toBe(false)
         })
 
-        it('should return true if the rollback version is the latest major version', () => {
+        it('should return true if the destination version is the latest major version', () => {
             const RELEASED_BUNDLES_1 = {
                 '1.0.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
             };
@@ -186,7 +186,7 @@ describe('Semver Versioning Test', () => {
             expect(new SemverVersioning(RELEASED_BUNDLES_2).shouldRollbackToBinary('1.2.0-rc.2')).toBe(true)
         })
 
-        it('should return false if the rollback version is not the latest major version', () => {
+        it('should return false if the destination version is not the latest major version', () => {
             const RELEASED_BUNDLES_1 = {
                 '1.0.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
                 '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
