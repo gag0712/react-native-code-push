@@ -93,8 +93,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           }
           
           const [, latestReleaseInfo] = versioning.findLatestRelease();
-          const shouldRollback = versioning.shouldRollback(runtimeVersion)
-          const isMandatory = shouldRollback || versioning.checkIsMandatory(runtimeVersion);
+          const isMandatory = versioning.checkIsMandatory(runtimeVersion);
 
           /**
            * Convert the update information decided from `ReleaseHistoryInterface` to be passed to the library core (original CodePush library).

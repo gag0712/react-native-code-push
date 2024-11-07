@@ -21,9 +21,9 @@ export abstract class BaseVersioning {
     protected sortedReleaseHistory: [ReleaseVersion, ReleaseInfo][];
     protected get sortedMandatoryReleaseHistory(): [ReleaseVersion, ReleaseInfo][];
     protected get sortedEnabledReleaseHistory(): [ReleaseVersion, ReleaseInfo][];
+    protected shouldRollback: (runtimeVersion: ReleaseVersion) => boolean;
     findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
     checkIsMandatory: (runtimeVersion: ReleaseVersion) => boolean;
-    shouldRollback: (runtimeVersion: ReleaseVersion) => boolean;
     shouldRollbackToBinary: (runtimeVersion: ReleaseVersion) => boolean;
 }
 

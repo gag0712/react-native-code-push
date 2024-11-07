@@ -115,6 +115,15 @@ describe('Semver Versioning Test', () => {
 
                 expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(true);
             })
+
+            it('should consider mandatory when latest version < current runtime version (ROLLBACK)', () => {
+                const RELEASED_BUNDLES = {
+                    '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+                };
+                const currentVersion = '1.2.0'
+    
+                expect(new SemverVersioning(RELEASED_BUNDLES).shouldRollback(currentVersion)).toBe(true)
+            })
         })
 
         describe('scenario test', () => {
@@ -133,17 +142,6 @@ describe('Semver Versioning Test', () => {
                 expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.1.1')).toBe(false);
                 expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.2.0')).toBe(false);
             });
-        })
-    })
-
-    describe('shouldRollback', () => {
-        it('should return true when latest version < current runtime version', () => {
-            const RELEASED_BUNDLES = {
-                '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
-            };
-            const currentVersion = '1.2.0'
-
-            expect(new SemverVersioning(RELEASED_BUNDLES).shouldRollback(currentVersion)).toBe(true)
         })
     })
 

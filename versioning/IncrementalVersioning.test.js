@@ -118,6 +118,15 @@ describe('Incremental Versioning Test', () => {
 
                 expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(true);
             })
+
+            it('should consider mandatory when latest version < current runtime version (ROLLBACK)', () => {
+                const RELEASED_BUNDLES = {
+                    '1': FIRST_RELEASE_INFO,
+                };
+                const currentVersion = '2'
+    
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).shouldRollback(currentVersion)).toBe(true)
+            })
         })
 
         describe('scenario test', () => {
@@ -136,17 +145,6 @@ describe('Incremental Versioning Test', () => {
                 expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('4')).toBe(false);
                 expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('5')).toBe(false);
             });
-        })
-    })
-
-    describe('shouldRollback', () => {
-        it('should return true when latest version < current runtime version', () => {
-            const RELEASED_BUNDLES = {
-                '1': FIRST_RELEASE_INFO,
-            };
-            const currentVersion = '2'
-
-            expect(new IncrementalVersioning(RELEASED_BUNDLES).shouldRollback(currentVersion)).toBe(true)
         })
     })
 

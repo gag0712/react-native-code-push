@@ -55,14 +55,16 @@ export class BaseVersioning {
       return false;
     }
 
+    const shouldRollback = this.shouldRollback(runtimeVersion);
     const [latestMandatoryVersion, _] = this.sortedMandatoryReleaseHistory[0];
     const [larger] = [latestMandatoryVersion, runtimeVersion].sort(
       this.sortingMethod
     );
 
     return (
-      runtimeVersion !== latestMandatoryVersion &&
-      larger === latestMandatoryVersion
+      shouldRollback ||
+      (runtimeVersion !== latestMandatoryVersion &&
+        larger === latestMandatoryVersion)
     );
   }
 
