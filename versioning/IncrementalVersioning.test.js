@@ -145,6 +145,22 @@ describe('Incremental Versioning Test', () => {
                 expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('4')).toBe(false);
                 expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('5')).toBe(false);
             });
+
+            it('When having not-enabled releases', () => {
+                const RELEASED_BUNDLES = {
+                    '1': FIRST_RELEASE_INFO,
+                    '2': { enabled: true, mandatory: true, ...MOCK_INFOS },
+                    '3': { enabled: false, mandatory: false, ...MOCK_INFOS },
+                    '4': { enabled: true, mandatory: true, ...MOCK_INFOS },
+                    '5': { enabled: false, mandatory: false, ...MOCK_INFOS },
+                };
+
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('1')).toBe(true);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('2')).toBe(true);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('3')).toBe(true);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('4')).toBe(false);
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('5')).toBe(true);
+            });
         })
     })
 
