@@ -104,6 +104,17 @@ describe('Semver Versioning Test', () => {
         
                 expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(true);
             });
+
+            it("should consider mandatory if there's a mandatory release between the runtime version and the latest", () => {
+                const RUNTIME_VERSION = '1.0.0'
+                const RELEASED_BUNDLES = {
+                    '1.0.0': FIRST_RELEASE_INFO,
+                    '1.2.0': { enabled: true, mandatory: true, ...MOCK_INFOS },
+                    '1.3.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+                }
+
+                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(true);
+            })
         })
 
         describe('scenario test', () => {

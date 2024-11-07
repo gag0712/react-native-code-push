@@ -107,6 +107,17 @@ describe('Incremental Versioning Test', () => {
         
                 expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(true);
             });
+
+            it("should consider mandatory if there's a mandatory release between the runtime version and the latest", () => {
+                const RUNTIME_VERSION = '1'
+                const RELEASED_BUNDLES = {
+                    '1': FIRST_RELEASE_INFO,
+                    '2': { enabled: true, mandatory: true, ...MOCK_INFOS },
+                    '3': { enabled: true, mandatory: false, ...MOCK_INFOS },
+                }
+
+                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory(RUNTIME_VERSION)).toBe(true);
+            })
         })
 
         describe('scenario test', () => {
