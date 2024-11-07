@@ -10,11 +10,11 @@ export class BaseVersioning {
     if (this.constructor == BaseVersioning) {
       throw new Error("Abstract classes can't be instantiated.");
     }
-    if (releaseHistory == null) {
-      throw new Error("param releaseHistory is needed");
+    if (releaseHistory == null || sortingMethod == null) {
+      throw new Error("param releaseHistory or sortingMethod is needed");
     }
 
-    this.sortingMethod = sortingMethod ?? (() => 0);
+    this.sortingMethod = sortingMethod;
     this.originalReleaseHistory = releaseHistory;
     this.sortedReleaseHistory = Object.entries(releaseHistory).sort(
       ([a], [b]) => this.sortingMethod(a, b)
