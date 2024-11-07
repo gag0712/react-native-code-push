@@ -45,7 +45,19 @@ export class BaseVersioning {
    * @return {boolean}
    */
   checkIsMandatory(runtimeVersion) {
-    throw new Error("Method `checkIsMandatory` is not implemented");
+    if (this.sortedMandatoryReleaseHistory.length === 0) {
+      return false;
+    }
+
+    const [latestMandatoryVersion, _] = this.sortedMandatoryReleaseHistory[0];
+    const [larger] = [latestMandatoryVersion, runtimeVersion].sort(
+      this.sortingMethod
+    );
+
+    return (
+      runtimeVersion !== latestMandatoryVersion &&
+      larger === latestMandatoryVersion
+    );
   }
 
   /**
@@ -54,7 +66,10 @@ export class BaseVersioning {
    * @return {boolean}
    */
   shouldRollback(runtimeVersion) {
-    throw new Error("Method `shouldRollback` is not implemented");
+    const [latestRelease] = this.findLatestRelease();
+    const [larger] = [latestRelease, runtimeVersion].sort(this.sortingMethod);
+
+    return runtimeVersion !== latestRelease && larger === runtimeVersion;
   }
 
   /**
