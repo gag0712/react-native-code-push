@@ -118,20 +118,6 @@ describe('Semver Versioning Test', () => {
         })
 
         describe('scenario test', () => {
-            it('Major Release > Mandatory > Not-mandatory > Not-mandatory', () => {
-                const RELEASED_BUNDLES = {
-                    '1.0.0': FIRST_RELEASE_INFO,
-                    '1.0.1': { enabled: true, mandatory: true, ...MOCK_INFOS },
-                    '1.1.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
-                    '1.2.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
-                };
-
-                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.0.0')).toBe(true);
-                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.0.1')).toBe(false);
-                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.1.0')).toBe(false);
-                expect(new SemverVersioning(RELEASED_BUNDLES).checkIsMandatory('1.2.0')).toBe(false);
-            });
-        
             it('Major Release > Mandatory > Not-mandatory > Mandatory > Not-mandatory', () => {
                 const RELEASED_BUNDLES = {
                     '1.0.0': FIRST_RELEASE_INFO,

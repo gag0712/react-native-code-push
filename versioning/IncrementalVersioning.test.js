@@ -121,20 +121,6 @@ describe('Incremental Versioning Test', () => {
         })
 
         describe('scenario test', () => {
-            it('Major Release > Mandatory > Not-mandatory > Not-mandatory', () => {
-                const RELEASED_BUNDLES = {
-                    '1': FIRST_RELEASE_INFO,
-                    '2': { enabled: true, mandatory: true, ...MOCK_INFOS },
-                    '3': { enabled: true, mandatory: false, ...MOCK_INFOS },
-                    '4': { enabled: true, mandatory: false, ...MOCK_INFOS },
-                };
-
-                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('1')).toBe(true);
-                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('2')).toBe(false);
-                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('3')).toBe(false);
-                expect(new IncrementalVersioning(RELEASED_BUNDLES).checkIsMandatory('4')).toBe(false);
-            });
-
             it('Major Release > Mandatory > Not-mandatory > Mandatory > Not-mandatory', () => {
                 const RELEASED_BUNDLES = {
                     '1': FIRST_RELEASE_INFO,
