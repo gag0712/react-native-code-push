@@ -178,6 +178,8 @@ describe('Semver Versioning Test', () => {
         it('should return true if the destination version is the latest major version', () => {
             const RELEASED_BUNDLES_1 = {
                 '1.0.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
+                '1.1.0': { enabled: false, mandatory: false, ...MOCK_INFOS },
+                '1.2.0': { enabled: false, mandatory: false, ...MOCK_INFOS },
             };
             const RELEASED_BUNDLES_2 = {
                 '1.2.0-rc.0': { enabled: true, mandatory: false, ...MOCK_INFOS },
