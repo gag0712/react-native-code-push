@@ -8,8 +8,8 @@ describe('BaseVersioning', () => {
 
         it('should throw an error if releaseHistory is not defined', () => {
             class TestVersioning extends BaseVersioning {}
-            expect(() => new TestVersioning()).toThrow("param releaseHistory is needed")
-            expect(() => new TestVersioning({})).not.toThrow("param releaseHistory is needed")
+            expect(() => new TestVersioning()).toThrow("param releaseHistory and sortingMethod is needed")
+            expect(() => new TestVersioning({}, () => {})).not.toThrow("param releaseHistory and sortingMethod is needed")
         })
     })
 })
