@@ -14,17 +14,28 @@ export class BaseVersioning {
       throw new Error("param releaseHistory and sortingMethod is needed");
     }
 
+    /** @type {SortingMethod} */
     this.sortingMethod = sortingMethod;
+
+    /** @type {ReleaseHistoryInterface} */
     this.originalReleaseHistory = releaseHistory;
+
+    /** @type {[ReleaseVersion, ReleaseInfo][]} */
     this.sortedReleaseHistory = Object.entries(releaseHistory).sort(
       ([a], [b]) => this.sortingMethod(a, b)
     );
   }
 
+  /**
+   * @return {[ReleaseVersion, ReleaseInfo][]}
+   */
   get sortedEnabledReleaseHistory() {
     return this.sortedReleaseHistory.filter(([_, bundle]) => bundle.enabled);
   }
 
+  /**
+   * @return {[ReleaseVersion, ReleaseInfo][]}
+   */
   get sortedMandatoryReleaseHistory() {
     return this.sortedEnabledReleaseHistory.filter(
       ([_, bundle]) => bundle.mandatory
