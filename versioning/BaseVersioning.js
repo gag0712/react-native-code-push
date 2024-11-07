@@ -18,7 +18,7 @@ export class BaseVersioning {
     this.originalReleaseHistory = releaseHistory;
     this.sortedReleaseHistory = Object.entries(releaseHistory)
       .filter(([_, bundle]) => bundle.enabled)
-      .sort(this.sortingMethod);
+      .sort(([a], [b]) => this.sortingMethod(a, b));
   }
 
   get sortedMandatoryReleaseHistory() {
@@ -65,7 +65,7 @@ export class BaseVersioning {
    */
   shouldRollbackToBinary(runtimeVersion) {
     const [latestReleaseVersion] = this.findLatestRelease();
-    const [firstMajorRelease] = Object.entries(this.originalReleaseHistory)
+    const firstMajorRelease = Object.keys(this.originalReleaseHistory)
       .sort(this.sortingMethod)
       .reverse()
       .at(0);

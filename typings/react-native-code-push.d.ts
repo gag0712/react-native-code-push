@@ -13,7 +13,7 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
-type SortingMethod = (a: [ReleaseVersion], b: [ReleaseVersion]) => number
+type SortingMethod = (a: ReleaseVersion, b: ReleaseVersion) => number
 
 export abstract class BaseVersioning {
     constructor(releaseHistory: ReleaseHistoryInterface, sortingMethod?: SortingMethod)
