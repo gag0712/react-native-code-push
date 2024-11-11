@@ -3,7 +3,7 @@
 const { program } = require("commander");
 const shell = require("shelljs");
 const { showLogo } = require("./utils/showLogo");
-const { findAndReadConfigFile } = require("./utils/fsForCodepush");
+const { findAndReadConfigFile } = require("./utils/fsUtils");
 
 shell.set("-e");
 shell.set("-v");
