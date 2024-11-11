@@ -62,12 +62,7 @@ export interface UpdateCheckResponse {
     is_mandatory?: boolean;
 }
 
-export interface CodePushOptions extends SyncOptions {
-    /**
-     * Specifies when you would like to synchronize updates with the CodePush server.
-     * Defaults to codePush.CheckFrequency.ON_APP_START.
-     */
-    checkFrequency: CodePush.CheckFrequency;
+interface CodePushSharedOptions {
     /**
      * Specifies the location of the update's file. It should include the http scheme and host.
      * It is used for self-hosting.
@@ -88,6 +83,19 @@ export interface CodePushOptions extends SyncOptions {
      * Specifies a function to get the release history.
      */
     updateChecker: (updateRequest: UpdateCheckRequest) => Promise<ReleaseHistoryInterface>;
+}
+
+export interface CodePushConfigFile extends CodePushSharedOptions {
+    awsCredential: string;
+    // TODO: More fields
+}
+
+export interface CodePushOptions extends CodePushSharedOptions, SyncOptions {
+    /**
+     * Specifies when you would like to synchronize updates with the CodePush server.
+     * Defaults to codePush.CheckFrequency.ON_APP_START.
+     */
+    checkFrequency: CodePush.CheckFrequency;
     /**
      * Specifies whether to run the original action, which queries AppCenter if an error occurs while running the `updateChecker` function.
      */
