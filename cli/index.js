@@ -2,7 +2,8 @@
 
 const { program } = require("commander");
 const shell = require("shelljs");
-const { showLogo } = require("./showLogo");
+const { showLogo } = require("./utils/showLogo");
+const { findAndReadConfigFile } = require("./utils/fsForCodepush");
 
 shell.set("-e");
 shell.set("-v");
@@ -13,6 +14,7 @@ program
   .version("1.0.0")
   .action(async () => {
     showLogo();
+    const config = findAndReadConfigFile(process.cwd());
   });
 
 program.parse();
