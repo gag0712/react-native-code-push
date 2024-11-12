@@ -1,4 +1,4 @@
-const { BaseVersioning } = require("./BaseVersioning.js");
+const { BaseVersioning } = require("./BaseVersioning");
 
 class IncrementalVersioning extends BaseVersioning {
   constructor(releaseHistory) {

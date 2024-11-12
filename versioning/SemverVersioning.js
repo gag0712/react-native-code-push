@@ -1,5 +1,5 @@
 const Semver = require("semver");
-const { BaseVersioning } = require("./BaseVersioning.js");
+const { BaseVersioning } = require("./BaseVersioning");
 
 class SemverVersioning extends BaseVersioning {
   constructor(releaseHistory) {

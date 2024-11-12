@@ -1,6 +1,6 @@
-import path from "path";
-import fs from "fs";
-import { parseExpression, parse } from "@babel/parser";
+const path = require("path");
+const fs = require("fs");
+const { parseExpression, parse } = require("@babel/parser");
 
 const OPTIONS_TO_BUNDLE = [
   "bundleHost",
@@ -9,11 +9,11 @@ const OPTIONS_TO_BUNDLE = [
   "updateChecker",
 ];
 
-export default async function (babel) {
+module.exports = function (babel) {
   const { types: t } = babel;
 
-  // Load config and imports from `codepush.config.mjs`
-  const { config, configImports, importedIdentifiers } = await loadConfig();
+  // Load config and imports from `codepush.config.js`
+  const { config, configImports, importedIdentifiers } = loadConfig();
 
   // Helper to serialize config values to AST nodes
   function serializeConfigToNode(value) {
@@ -58,15 +58,15 @@ export default async function (babel) {
     throw new Error(`Unsupported config value type: ${typeof value}`);
   }
 
-  async function loadConfig() {
-    const configPath = path.resolve(process.cwd(), "codepush.config.mjs");
+  function loadConfig() {
+    const configPath = path.resolve(process.cwd(), "codepush.config.js");
     if (!fs.existsSync(configPath)) {
       throw new Error(
-        "codepush.config.mjs not found. Please ensure it exists in the root directory."
+        "codepush.config.js not found. Please ensure it exists in the root directory."
       );
     }
 
-    const configModule = await import(configPath);
+    const configModule = require(configPath);
 
     const configCode = fs.readFileSync(configPath, "utf8");
     const ast = parse(configCode, {
@@ -103,10 +103,10 @@ export default async function (babel) {
           },
         });
 
-        // Add missing imports from codepush.config.mjs to the input file
+        // Add missing imports from codepush.config.js to the input file
         configImports.forEach((importNode) => {
           if (!existingImports.has(importNode.source.value)) {
-            // Clone the import node from codepush.config.mjs and add it to the input file
+            // Clone the import node from codepush.config.js and add it to the input file
             path.node.body.unshift(t.cloneNode(importNode));
           }
         });
@@ -147,4 +147,4 @@ export default async function (babel) {
       },
     },
   };
-}
+};

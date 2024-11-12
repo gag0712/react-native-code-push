@@ -1,4 +1,6 @@
-import { SemverVersioning } from "@bravemobile/react-native-code-push/versioning/SemverVersioning.js";
+const {
+  SemverVersioning,
+} = require("@bravemobile/react-native-code-push/versioning");
 
 class CustomVersioning extends SemverVersioning {
   constructor() {
@@ -6,7 +8,7 @@ class CustomVersioning extends SemverVersioning {
   }
 }
 
-export default {
+module.exports = {
   bundleHost: "bundleHost",
   runtimeVersion: "runtimeVersion",
   versioning: CustomVersioning,
