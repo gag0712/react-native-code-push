@@ -1,7 +1,7 @@
 /**
  * @type {BaseVersioning}
  */
-export class BaseVersioning {
+class BaseVersioning {
   /**
    * @param {ReleaseHistoryInterface} releaseHistory
    * @param {SortingMethod} sortingMethod
@@ -108,3 +108,5 @@ export class BaseVersioning {
     );
   }
 }
+
+module.exports = { BaseVersioning };
