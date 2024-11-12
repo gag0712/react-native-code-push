@@ -12,7 +12,8 @@ const OPTIONS_TO_BUNDLE = [
 export default async function (babel) {
   const { types: t } = babel;
 
-  const { config, configImports } = await loadConfig();
+  // Load config and imports from `codepush.config.mjs`
+  const { config, configImports, importedIdentifiers } = await loadConfig();
 
   // Helper to serialize config values to AST nodes
   function serializeConfigToNode(value) {
@@ -35,6 +36,12 @@ export default async function (babel) {
       );
     }
 
+    // Use identifier for imported symbols instead of inlining
+    if (importedIdentifiers.has(value.name)) {
+      return t.identifier(value.name);
+    }
+
+    // For inline functions, parse and serialize them as expressions
     if (typeof value === "function") {
       const valueString = value.toString();
       try {
@@ -55,7 +62,7 @@ export default async function (babel) {
     const configPath = path.resolve(process.cwd(), "codepush.config.mjs");
     if (!fs.existsSync(configPath)) {
       throw new Error(
-        "codepush.config.js not found. Please ensure it exists in the root directory."
+        "codepush.config.mjs not found. Please ensure it exists in the root directory."
       );
     }
 
@@ -66,17 +73,22 @@ export default async function (babel) {
       sourceType: "module",
     });
 
-    // Extract import declarations
+    // Extract import declarations and track imported identifiers
     const imports = [];
+    const importedIdentifiers = new Set();
     ast.program.body.forEach((node) => {
       if (t.isImportDeclaration(node)) {
         imports.push(node);
+        node.specifiers.forEach((specifier) => {
+          importedIdentifiers.add(specifier.local.name);
+        });
       }
     });
 
     return {
       config: configModule.default || configModule,
       configImports: imports,
+      importedIdentifiers,
     };
   }
 
@@ -91,10 +103,10 @@ export default async function (babel) {
           },
         });
 
-        // Add missing imports from config.js to the input file
+        // Add missing imports from codepush.config.mjs to the input file
         configImports.forEach((importNode) => {
           if (!existingImports.has(importNode.source.value)) {
-            // Clone the import node from config.js and add it to the input file
+            // Clone the import node from codepush.config.mjs and add it to the input file
             path.node.body.unshift(t.cloneNode(importNode));
           }
         });
