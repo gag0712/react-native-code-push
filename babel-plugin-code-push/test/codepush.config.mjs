@@ -1,6 +1,6 @@
 import { SemverVersioning } from "@bravemobile/react-native-code-push/versioning/SemverVersioning.js";
 
-class Versioning extends SemverVersioning {
+class CustomVersioning extends SemverVersioning {
   constructor() {
     super();
   }
@@ -9,7 +9,7 @@ class Versioning extends SemverVersioning {
 export default {
   bundleHost: "bundleHost",
   runtimeVersion: "runtimeVersion",
-  versioning: Versioning,
+  versioning: CustomVersioning,
   updateChecker: (updateRequest) => {
     // ..my Implementation
   },
