@@ -1,4 +1,4 @@
-import { BaseVersioning } from "./BaseVersioning";
+import { BaseVersioning } from "./BaseVersioning.js";
 
 export class IncrementalVersioning extends BaseVersioning {
   constructor(releaseHistory) {

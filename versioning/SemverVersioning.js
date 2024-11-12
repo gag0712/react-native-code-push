@@ -1,5 +1,5 @@
 import Semver from "semver";
-import { BaseVersioning } from "./BaseVersioning";
+import { BaseVersioning } from "./BaseVersioning.js";
 
 export class SemverVersioning extends BaseVersioning {
   constructor(releaseHistory) {
