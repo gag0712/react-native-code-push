@@ -1,4 +1,4 @@
-import { SemverVersioning } from "@bravemobile/react-native-code-push/versioning/SemverVersioning.js";
+import { SemverVersioning } from "@bravemobile/react-native-code-push/versioning";
 import codePush from "@bravemobile/react-native-code-push";
 codePush({
   bundleHost: "bundleHost",
