@@ -76,11 +76,47 @@ module.exports = function (babel) {
     // Extract import declarations and track imported identifiers
     const imports = [];
     const importedIdentifiers = new Set();
+
+    const convertRequireIntoImportStatement = (declaration) => {
+      const moduleName = declaration.init.arguments[0].value;
+      if (t.isIdentifier(declaration.id)) {
+        // Case for `const fs = require("fs")`
+        return t.importDeclaration(
+          [t.importDefaultSpecifier(declaration.id)],
+          t.stringLiteral(moduleName)
+        );
+      } else if (t.isObjectPattern(declaration.id)) {
+        // Case for `const { parse } = require("module")`
+        const importSpecifiers = declaration.id.properties.map((property) =>
+          t.importSpecifier(property.value, property.key)
+        );
+        return t.importDeclaration(
+          importSpecifiers,
+          t.stringLiteral(moduleName)
+        );
+      }
+    };
+
     ast.program.body.forEach((node) => {
       if (t.isImportDeclaration(node)) {
+        // Handle import statements
         imports.push(node);
         node.specifiers.forEach((specifier) => {
           importedIdentifiers.add(specifier.local.name);
+        });
+      } else if (t.isVariableDeclaration(node)) {
+        node.declarations.forEach((declaration) => {
+          if (
+            t.isCallExpression(declaration.init) &&
+            t.isIdentifier(declaration.init.callee, { name: "require" }) &&
+            declaration.init.arguments.length === 1 &&
+            t.isStringLiteral(declaration.init.arguments[0])
+          ) {
+            let importDeclaration =
+              convertRequireIntoImportStatement(declaration);
+            imports.push(importDeclaration);
+            importedIdentifiers.add(declaration.id.name); // Track the imported identifier
+          }
         });
       }
     });
