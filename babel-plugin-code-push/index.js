@@ -12,7 +12,9 @@ const OPTIONS_TO_BUNDLE = [
 module.exports = function (babel, options) {
   const { types: t } = babel;
   const configPath =
-    options.configPath ?? path.resolve(process.cwd(), "codepush.config.js");
+    options.configPath != null
+      ? path.resolve(options.configPath)
+      : path.resolve(process.cwd(), "codepush.config.js");
 
   // Load config and imports from `codepush.config.js`
   const { config, configImports, importedIdentifiers } = loadConfig(configPath);
@@ -116,7 +118,9 @@ module.exports = function (babel, options) {
             let importDeclaration =
               convertRequireIntoImportStatement(declaration);
             imports.push(importDeclaration);
-            importedIdentifiers.add(declaration.id.name); // Track the imported identifier
+            declaration.id.properties.forEach((dec) => {
+              importedIdentifiers.add(dec.value.name); // Track the imported identifier
+            });
           }
         });
       }
