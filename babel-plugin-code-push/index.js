@@ -9,11 +9,13 @@ const OPTIONS_TO_BUNDLE = [
   "updateChecker",
 ];
 
-module.exports = function (babel) {
+module.exports = function (babel, options) {
   const { types: t } = babel;
+  const configPath =
+    options.configPath ?? path.resolve(process.cwd(), "codepush.config.js");
 
   // Load config and imports from `codepush.config.js`
-  const { config, configImports, importedIdentifiers } = loadConfig();
+  const { config, configImports, importedIdentifiers } = loadConfig(configPath);
 
   // Helper to serialize config values to AST nodes
   function serializeConfigToNode(value) {
@@ -58,8 +60,7 @@ module.exports = function (babel) {
     throw new Error(`Unsupported config value type: ${typeof value}`);
   }
 
-  function loadConfig() {
-    const configPath = path.resolve(process.cwd(), "codepush.config.js");
+  function loadConfig(configPath) {
     if (!fs.existsSync(configPath)) {
       throw new Error(
         "codepush.config.js not found. Please ensure it exists in the root directory."
