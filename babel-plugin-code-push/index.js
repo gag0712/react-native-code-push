@@ -17,121 +17,10 @@ module.exports = function (babel, options) {
       : path.resolve(process.cwd(), "codepush.config.js");
 
   // Load config and imports from `codepush.config.js`
-  const { config, configImports, importedIdentifiers } = loadConfig(configPath);
-
-  // Helper to serialize config values to AST nodes
-  function serializeConfigToNode(value) {
-    if (
-      ["string", "number", "boolean"].includes(typeof value) ||
-      value === null
-    ) {
-      return t.valueToNode(value); // Handle primitive values
-    }
-
-    if (Array.isArray(value)) {
-      return t.arrayExpression(value.map(serializeConfigToNode)); // Recursively handle arrays
-    }
-
-    if (typeof value === "object" && value !== null) {
-      return t.objectExpression(
-        Object.entries(value).map(([key, val]) =>
-          t.objectProperty(t.identifier(key), serializeConfigToNode(val))
-        )
-      );
-    }
-
-    // Use identifier for imported symbols instead of inlining
-    if (importedIdentifiers.has(value.name)) {
-      return t.identifier(value.name);
-    }
-
-    // For inline functions, parse and serialize them as expressions
-    if (typeof value === "function") {
-      const valueString = value.toString();
-      try {
-        return parseExpression(valueString, { sourceType: "module" });
-      } catch (error) {
-        throw new Error(
-          `Failed to parse function ${value.name || "anonymous"}: ${
-            error.message
-          }`
-        );
-      }
-    }
-
-    throw new Error(`Unsupported config value type: ${typeof value}`);
-  }
-
-  function loadConfig(configPath) {
-    if (!fs.existsSync(configPath)) {
-      throw new Error(
-        "codepush.config.js not found. Please ensure it exists in the root directory."
-      );
-    }
-
-    const configModule = require(configPath);
-
-    const configCode = fs.readFileSync(configPath, "utf8");
-    const ast = parse(configCode, {
-      sourceType: "module",
-    });
-
-    // Extract import declarations and track imported identifiers
-    const imports = [];
-    const importedIdentifiers = new Set();
-
-    const convertRequireIntoImportStatement = (declaration) => {
-      const moduleName = declaration.init.arguments[0].value;
-      if (t.isIdentifier(declaration.id)) {
-        // Case for `const fs = require("fs")`
-        return t.importDeclaration(
-          [t.importDefaultSpecifier(declaration.id)],
-          t.stringLiteral(moduleName)
-        );
-      } else if (t.isObjectPattern(declaration.id)) {
-        // Case for `const { parse } = require("module")`
-        const importSpecifiers = declaration.id.properties.map((property) =>
-          t.importSpecifier(property.value, property.key)
-        );
-        return t.importDeclaration(
-          importSpecifiers,
-          t.stringLiteral(moduleName)
-        );
-      }
-    };
-
-    ast.program.body.forEach((node) => {
-      if (t.isImportDeclaration(node)) {
-        // Handle import statements
-        imports.push(node);
-        node.specifiers.forEach((specifier) => {
-          importedIdentifiers.add(specifier.local.name);
-        });
-      } else if (t.isVariableDeclaration(node)) {
-        node.declarations.forEach((declaration) => {
-          if (
-            t.isCallExpression(declaration.init) &&
-            t.isIdentifier(declaration.init.callee, { name: "require" }) &&
-            declaration.init.arguments.length === 1 &&
-            t.isStringLiteral(declaration.init.arguments[0])
-          ) {
-            let importDeclaration =
-              convertRequireIntoImportStatement(declaration);
-            imports.push(importDeclaration);
-            declaration.id.properties.forEach((dec) => {
-              importedIdentifiers.add(dec.value.name); // Track the imported identifier
-            });
-          }
-        });
-      }
-    });
-
-    return {
-      config: configModule.default || configModule,
-      configImports: imports,
-      importedIdentifiers,
-    };
-  }
+  const { config, configImports, importedIdentifiers } = loadConfig(
+    babel,
+    configPath
+  );
 
   return {
     visitor: {
@@ -177,7 +66,7 @@ module.exports = function (babel, options) {
             OPTIONS_TO_BUNDLE.map((key) =>
               t.objectProperty(
                 t.identifier(key),
-                serializeConfigToNode(config[key])
+                serializeConfigToNode(babel, importedIdentifiers, config[key])
               )
             )
           );
@@ -189,3 +78,121 @@ module.exports = function (babel, options) {
     },
   };
 };
+
+/** loads config file from configPath */
+function loadConfig(babel, configPath) {
+  if (!fs.existsSync(configPath)) {
+    throw new Error(
+      "codepush.config.js not found. Please ensure it exists in the root directory."
+    );
+  }
+
+  const { types: t } = babel;
+  const configModule = require(configPath);
+
+  const configCode = fs.readFileSync(configPath, "utf8");
+  const ast = parse(configCode, {
+    sourceType: "module",
+  });
+
+  // Extract import declarations and track imported identifiers
+  const imports = [];
+  const importedIdentifiers = new Set();
+
+  const convertRequireIntoImportStatement = (declaration) => {
+    const moduleName = declaration.init.arguments[0].value;
+    if (t.isIdentifier(declaration.id)) {
+      // Case for `const fs = require("fs")`
+      return t.importDeclaration(
+        [t.importDefaultSpecifier(declaration.id)],
+        t.stringLiteral(moduleName)
+      );
+    } else if (t.isObjectPattern(declaration.id)) {
+      // Case for `const { parse } = require("module")`
+      const importSpecifiers = declaration.id.properties.map((property) =>
+        t.importSpecifier(property.value, property.key)
+      );
+      return t.importDeclaration(importSpecifiers, t.stringLiteral(moduleName));
+    }
+  };
+
+  ast.program.body.forEach((node) => {
+    if (t.isImportDeclaration(node)) {
+      // Handle import statements
+      imports.push(node);
+      node.specifiers.forEach((specifier) => {
+        importedIdentifiers.add(specifier.local.name);
+      });
+    } else if (t.isVariableDeclaration(node)) {
+      // Handle require function
+      node.declarations.forEach((declaration) => {
+        if (
+          t.isCallExpression(declaration.init) &&
+          t.isIdentifier(declaration.init.callee, { name: "require" }) &&
+          declaration.init.arguments.length === 1 &&
+          t.isStringLiteral(declaration.init.arguments[0])
+        ) {
+          const importDeclaration =
+            convertRequireIntoImportStatement(declaration);
+          imports.push(importDeclaration);
+          declaration.id.properties.forEach((dec) => {
+            importedIdentifiers.add(dec.value.name); // Track the imported identifier
+          });
+        }
+      });
+    }
+  });
+
+  return {
+    config: configModule.default || configModule,
+    configImports: imports,
+    importedIdentifiers,
+  };
+}
+
+/** Helper to serialize config values to AST nodes */
+function serializeConfigToNode(babel, importedIdentifiers, value) {
+  const { types: t } = babel;
+  if (["string", "number", "boolean"].includes(typeof value) || value == null) {
+    return t.valueToNode(value); // Handle primitive values
+  }
+
+  if (Array.isArray(value)) {
+    return t.arrayExpression(
+      // Recursively handle arrays
+      value.map((v) => serializeConfigToNode(babel, importedIdentifiers, v))
+    );
+  }
+
+  if (typeof value === "object") {
+    return t.objectExpression(
+      Object.entries(value).map(([key, val]) =>
+        t.objectProperty(
+          t.identifier(key),
+          serializeConfigToNode(babel, importedIdentifiers, val)
+        )
+      )
+    );
+  }
+
+  // Use identifier for imported symbols instead of inlining
+  if (importedIdentifiers.has(value.name)) {
+    return t.identifier(value.name);
+  }
+
+  // For inline functions, parse and serialize them as expressions
+  if (typeof value === "function") {
+    const valueString = value.toString();
+    try {
+      return parseExpression(valueString, { sourceType: "module" });
+    } catch (error) {
+      throw new Error(
+        `Failed to parse function ${value.name || "anonymous"}: ${
+          error.message
+        }`
+      );
+    }
+  }
+
+  throw new Error(`Unsupported config value type: ${typeof value}`);
+}
