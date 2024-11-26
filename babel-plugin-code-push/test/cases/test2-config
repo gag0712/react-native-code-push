@@ -6,7 +6,4 @@ module.exports = {
   bundleHost: "bundleHost",
   runtimeVersion: "runtimeVersion",
   versioning: SemverVersioning,
-  updateChecker: (updateRequest) => {
-    // ..my Implementation
-  },
 };

@@ -6,7 +6,6 @@ const OPTIONS_TO_BUNDLE = [
   "bundleHost",
   "runtimeVersion",
   "versioning",
-  "updateChecker",
 ];
 
 module.exports = function (babel, options) {

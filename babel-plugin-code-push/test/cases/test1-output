@@ -7,8 +7,5 @@ codePush({
     constructor() {
       super();
     }
-  },
-  updateChecker: updateRequest => {
-    // ..my Implementation
   }
 });
