@@ -4,38 +4,46 @@ const { getReactTempDir } = require('../functions/getReactTempDir');
 const { runHermesEmitBinaryCommand } = require('../functions/runHermesEmitBinaryCommand');
 const { makeCodePushBundle } = require('../functions/makeCodePushBundle');
 
-const platform = 'ios' ;
+/**
+ * @param platform {string} 'ios' | 'android'
+ * @param outputRootPath {string}
+ * @param entryFile {string}
+ * @param bundleName {string|undefined}
+ * @return {Promise<{bundleFileName: string, packageHash: string}>}
+ */
+async function runBundleCodePush(
+  platform = 'ios',
+  outputRootPath = 'build',
+  entryFile = 'index.ts',
+  bundleName,
+) {
+    const OUTPUT_CONTENT_PATH = `${outputRootPath}/CodePush`;
+    const BUNDLE_NAME_DEFAULT = platform === 'ios' ? 'main.jsbundle' : 'index.android.bundle';
+    const _bundleName = bundleName ? bundleName : BUNDLE_NAME_DEFAULT;
+    const SOURCEMAP_OUTPUT = `${outputRootPath}/${_bundleName}.map`;
 
-async function runBundleCodePush() {
-
-    // TODO: Make it configurable via command line arguments
-    const OUTPUT_PATH = 'build' ;
-    const CONTENTS_PATH = `${OUTPUT_PATH}/CodePush` ;
-    const BUNDLE_NAME = platform === 'ios' ? 'main.jsbundle' : 'index.android.bundle';
-    const SOURCEMAP_OUTPUT = `${OUTPUT_PATH}/${BUNDLE_NAME}.map` ;
-
-    prepareToBundleJS({ deleteDirs: [OUTPUT_PATH, getReactTempDir()], makeDir: CONTENTS_PATH });
+    prepareToBundleJS({ deleteDirs: [outputRootPath, getReactTempDir()], makeDir: OUTPUT_CONTENT_PATH });
 
     runReactNativeBundleCommand(
-      BUNDLE_NAME,
-      CONTENTS_PATH,
+      _bundleName,
+      OUTPUT_CONTENT_PATH,
       platform,
       SOURCEMAP_OUTPUT,
+      entryFile,
     );
     console.log('log: JS bundling complete');
 
     await runHermesEmitBinaryCommand(
-      BUNDLE_NAME,
-      CONTENTS_PATH,
+      _bundleName,
+      OUTPUT_CONTENT_PATH,
       SOURCEMAP_OUTPUT,
     );
     console.log('log: Hermes compilation complete');
 
-    const { bundleFileName, packageHash } = await makeCodePushBundle(CONTENTS_PATH);
+    const { bundleFileName, packageHash } = await makeCodePushBundle(OUTPUT_CONTENT_PATH);
     console.log(`log: CodePush bundle created (file name: ${bundleFileName})`);
 
-
-    // TODO: Output packageHash and file name - Required when creating ReleaseHistoryInterface data
+    return { bundleFileName, packageHash }; // returns for release command implementation
 }
 
 module.exports = { runBundleCodePush };
