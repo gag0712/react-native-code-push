@@ -2,10 +2,10 @@
  * code based on appcenter-cli
  */
 
-import childProcess from 'child_process';
-import fs from 'fs';
-import path from 'path';
-import shell from 'shelljs';
+const childProcess = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const shell = require('shelljs');
 
 /**
  * Run Hermes compile CLI command
@@ -16,7 +16,7 @@ import shell from 'shelljs';
  * @param extraHermesFlags {string[]} Additional options to pass to `hermesc` command
  * @return {Promise<void>}
  */
-export async function runHermesEmitBinaryCommand(
+async function runHermesEmitBinaryCommand(
     bundleName,
     outputPath,
     sourcemapOutput,
@@ -209,3 +209,5 @@ function directoryExistsSync(dirname) {
     }
     return false;
 }
+
+module.exports = { runHermesEmitBinaryCommand };

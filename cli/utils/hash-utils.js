@@ -7,11 +7,11 @@
  * integrity checks) and Management SDK (for end-to-end code signing), please keep them in sync.
  */
 
-import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-import { isDirectory } from './file-utils';
-import { walk } from './promisfied-fs';
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const { isDirectory } = require('./file-utils');
+const { walk } = require('./promisfied-fs');
 
 // Do not throw an exception if either of these modules are missing, as they may not be needed by the
 // consumer of this file.
@@ -111,7 +111,7 @@ class PackageManifest {
  * @param basePath {string}
  * @return {Promise<string>}
  */
-export async function generatePackageHashFromDirectory(directoryPath, basePath) {
+async function generatePackageHashFromDirectory(directoryPath, basePath) {
     try {
         if (!isDirectory(directoryPath)) {
             throw new Error('Not a directory. Please either create a directory, or use hashFile().');
@@ -223,3 +223,5 @@ function hashStream(readStream) {
         readStream.pipe(_hashStream);
     });
 }
+
+module.exports = { generatePackageHashFromDirectory };

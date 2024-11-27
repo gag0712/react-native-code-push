@@ -2,11 +2,11 @@
  * code based on appcenter-cli
  */
 
-import fs from 'fs';
-import path from 'path';
-import yazl from 'yazl';
-import { generateRandomFilename, normalizePath, isDirectory } from './file-utils';
-import { walk } from './promisfied-fs';
+const fs = require('fs');
+const path = require('path');
+const yazl = require('yazl');
+const { generateRandomFilename, normalizePath, isDirectory } = require('./file-utils');
+const { walk } = require('./promisfied-fs');
 
 /**
  * @typedef {{ sourceLocation: string, targetLocation: string }} ReleaseFile
@@ -16,7 +16,7 @@ import { walk } from './promisfied-fs';
  * @param updateContentsPath {string}
  * @return {Promise<string>}
  */
-export default function zip(updateContentsPath) {
+function zip(updateContentsPath) {
 
     // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
@@ -85,3 +85,5 @@ export default function zip(updateContentsPath) {
         zipFile.end();
     });
 }
+
+module.exports = zip;

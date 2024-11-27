@@ -2,15 +2,15 @@
  * code based on appcenter-cli
  */
 
-import { promises as fs } from 'fs';
-import path from 'path';
+const { promises: fs } = require('fs');
+const path = require('path');
 
 /**
  *
  * @param dir {string}
  * @return {Promise<string[]>}
  */
-export async function walk(dir) {
+async function walk(dir) {
     const stats = await fs.stat(dir);
     if (stats.isDirectory()) {
         /**
@@ -25,3 +25,5 @@ export async function walk(dir) {
         return [dir];
     }
 }
+
+module.exports = { walk };

@@ -1,8 +1,8 @@
-import { prepareToBundleJS } from '../functions/prepareToBundleJS';
-import { runReactNativeBundleCommand } from '../functions/runReactNativeBundleCommand';
-import { getReactTempDir } from '../functions/getReactTempDir';
-import { runHermesEmitBinaryCommand } from '../functions/runHermesEmitBinaryCommand';
-import { makeCodePushBundle } from '../functions/makeCodePushBundle';
+const { prepareToBundleJS } = require('../functions/prepareToBundleJS');
+const { runReactNativeBundleCommand } = require('../functions/runReactNativeBundleCommand');
+const { getReactTempDir } = require('../functions/getReactTempDir');
+const { runHermesEmitBinaryCommand } = require('../functions/runHermesEmitBinaryCommand');
+const { makeCodePushBundle } = require('../functions/makeCodePushBundle');
 
 const platform = 'ios' ;
 
@@ -37,3 +37,5 @@ async function runBundleCodePush() {
 
     // TODO: Output packageHash and file name - Required when creating ReleaseHistoryInterface data
 }
+
+module.exports = { runBundleCodePush };
