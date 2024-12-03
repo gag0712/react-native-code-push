@@ -13,7 +13,7 @@
   "author": "Soomgo Mobile Team (originally Microsoft Corporation)",
   "license": "MIT",
   "bin": {
-    "code-push": "./cli/index.js"
+    "code-push": "cli/index.js"
   },
   "scripts": {
     "clean": "shx rm -rf bin",
@@ -38,7 +38,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Soomgo-Mobile/react-native-code-push"
+    "url": "git+https://github.com/Soomgo-Mobile/react-native-code-push.git"
   },
   "dependencies": {
     "code-push": "^4.2.2",

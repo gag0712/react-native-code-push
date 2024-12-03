@@ -13,7 +13,7 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
-type SortingMethod = (a: ReleaseVersion, b: ReleaseVersion) => number
+type SortingMethod = (a: ReleaseVersion, b: ReleaseVersion) => number;
 
 export abstract class BaseVersioning {
     constructor(releaseHistory: ReleaseHistoryInterface, sortingMethod?: SortingMethod)
@@ -75,7 +75,7 @@ interface CodePushSharedOptions {
      */
     runtimeVersion: string;
     /**
-     * Specifies versioning policy.    
+     * Specifies versioning policy.
      * Defaults to `SemverVersioning`
      */
     versioning?: typeof BaseVersioning;
@@ -344,7 +344,7 @@ declare function CodePush(options?: CodePushOptions): (x: any) => any;
  *
  * @param x the React Component that will decorated
  */
-declare function CodePush(x: any): any
+declare function CodePush(x: any): any;
 
 declare namespace CodePush {
     /**
@@ -367,7 +367,7 @@ declare namespace CodePush {
      *
      * @param updateState The state of the update you want to retrieve the metadata for. Defaults to UpdateState.RUNNING.
      */
-    function getUpdateMetadata(updateState?: UpdateState) : Promise<LocalPackage|null>;
+    function getUpdateMetadata(updateState?: UpdateState): Promise<LocalPackage|null>;
 
     /**
      * Notifies the CodePush runtime that an installed update is considered successful.
@@ -413,7 +413,7 @@ declare namespace CodePush {
         BASE: typeof BaseVersioning,
         SEMVER: typeof BaseVersioning,
         INCREMENTAL: typeof BaseVersioning,
-    }
+    };
 
     /**
      * Indicates when you would like an installed update to actually be applied.
