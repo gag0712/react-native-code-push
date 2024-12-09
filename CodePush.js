@@ -1,6 +1,4 @@
-import { AcquisitionManager as Sdk } from "code-push/script/acquisition-sdk";
 import { Alert } from "./AlertAdapter";
-import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, Platform } from "react-native";
 import log from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
@@ -30,7 +28,6 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
    * deployments (e.g. an early access deployment for insiders).
    */
   const config = deploymentKey ? { ...nativeConfig, ...{ deploymentKey } } : nativeConfig;
-  const sdk = getPromisifiedSdk(requestFetchAdapter, config);
 
   // Use dynamically overridden getCurrentPackage() during tests.
   const localPackage = await module.exports.getCurrentPackage();
@@ -150,7 +147,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           return undefined;
         }
       })()
-      : await sdk.queryUpdateWithCurrentPackage(queryPackage);
+      : (() => { throw new Error('updateChecker is not set') })()
 
   if (sharedCodePushOptions.bundleHost && update) {
     const fileName = typeof update.downloadUrl === 'string' ? update.downloadUrl.split('/').pop() : null;
@@ -222,24 +219,6 @@ async function getUpdateMetadata(updateState) {
     updateMetadata.isFirstRun = await NativeCodePush.isFirstRun(updateMetadata.packageHash);
   }
   return updateMetadata;
-}
-
-function getPromisifiedSdk(requestFetchAdapter, config) {
-  // Use dynamically overridden AcquisitionSdk during tests.
-  const sdk = new module.exports.AcquisitionSdk(requestFetchAdapter, config);
-  sdk.queryUpdateWithCurrentPackage = (queryPackage) => {
-    return new Promise((resolve, reject) => {
-      module.exports.AcquisitionSdk.prototype.queryUpdateWithCurrentPackage.call(sdk, queryPackage, (err, update) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(update);
-        }
-      });
-    });
-  };
-
-  return sdk;
 }
 
 // This ensures that notifyApplicationReadyInternal is only called once
@@ -729,7 +708,6 @@ function codePushify(options = {}) {
 if (NativeCodePush) {
   CodePush = codePushify;
   Object.assign(CodePush, {
-    AcquisitionSdk: Sdk,
     checkForUpdate,
     getConfiguration,
     getCurrentPackage,
