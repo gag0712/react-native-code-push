@@ -93,10 +93,6 @@ export interface CodePushOptions extends CodePushSharedOptions, SyncOptions {
      */
     checkFrequency: CodePush.CheckFrequency;
     /**
-     * Specifies whether to run the original action, which queries AppCenter if an error occurs while running the `updateChecker` function.
-     */
-    fallbackToAppCenter?: boolean;
-    /**
      * Specifies a function to get the release history.
      */
     updateChecker: (updateRequest: UpdateCheckRequest) => Promise<ReleaseHistoryInterface>;

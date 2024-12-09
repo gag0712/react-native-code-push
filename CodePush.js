@@ -146,12 +146,8 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           };
         } catch (error) {
           log(`An error has occurred at update checker : ${error.stack}`);
-          if (sharedCodePushOptions.fallbackToAppCenter) {
-            return await sdk.queryUpdateWithCurrentPackage(queryPackage);
-          } else {
-            // update will not happen
-            return undefined;
-          }
+          // update will not happen
+          return undefined;
         }
       })()
       : await sdk.queryUpdateWithCurrentPackage(queryPackage);
@@ -639,8 +635,6 @@ let CodePush;
  *   setRuntimeVersion(version: string): void,
  *   versioning: Versioning
  *   setVersioning(versioning: Versioning): void
- *   fallbackToAppCenter: boolean,
- *   setFallbackToAppCenter(enable: boolean): void
  * }}
  */
 const sharedCodePushOptions = {
@@ -668,10 +662,6 @@ const sharedCodePushOptions = {
   setUpdateChecker(updateCheckerFunction) {
     if (updateCheckerFunction && typeof updateCheckerFunction !== 'function') throw new Error('pass a function to setUpdateChecker');
     this.updateChecker = updateCheckerFunction;
-  },
-  fallbackToAppCenter: true,
-  setFallbackToAppCenter(enable) {
-    this.fallbackToAppCenter = enable;
   }
 }
 
@@ -699,7 +689,6 @@ function codePushify(options = {}) {
   sharedCodePushOptions.setBundleHost(options.bundleHost);
   sharedCodePushOptions.setRuntimeVersion(options.runtimeVersion);
   sharedCodePushOptions.setUpdateChecker(options.updateChecker);
-  sharedCodePushOptions.setFallbackToAppCenter(options.fallbackToAppCenter);
 
   const decorator = (RootComponent) => {
     class CodePushComponent extends React.Component {

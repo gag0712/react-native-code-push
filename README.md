@@ -29,7 +29,6 @@ Specify a function to perform the update check using the `updateChecker` option.
 
 (The `bundleHost` option can be used in combination.)
 
-`fallbackToAppCenter` : If an error occurs during the execution of the updateChecker function, the original update check behavior is performed as a fallback. (default: true)
 
 ```javascript
 const codePushOptions = {
@@ -41,7 +40,6 @@ const codePushOptions = {
     });
     return response;
   },
-  fallbackToAppCenter: true,
 };
 
 export default codePush(codePushOptions)(MyApp);
