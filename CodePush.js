@@ -189,7 +189,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
 
     return null;
   } else {
-    const remotePackage = { ...update, ...PackageMixins.remote(sdk.reportStatusDownload) };
+    const remotePackage = { ...update, ...PackageMixins.remote() };
     remotePackage.failedInstall = await NativeCodePush.isFailedUpdate(remotePackage.packageHash);
     remotePackage.deploymentKey = deploymentKey || nativeConfig.deploymentKey;
     return remotePackage;
@@ -242,18 +242,6 @@ function getPromisifiedSdk(requestFetchAdapter, config) {
   sdk.reportStatusDeploy = (deployedPackage, status, previousLabelOrAppVersion, previousDeploymentKey) => {
     return new Promise((resolve, reject) => {
       module.exports.AcquisitionSdk.prototype.reportStatusDeploy.call(sdk, deployedPackage, status, previousLabelOrAppVersion, previousDeploymentKey, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  };
-
-  sdk.reportStatusDownload = (downloadedPackage) => {
-    return new Promise((resolve, reject) => {
-      module.exports.AcquisitionSdk.prototype.reportStatusDownload.call(sdk, downloadedPackage, (err) => {
         if (err) {
           reject(err);
         } else {
