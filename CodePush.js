@@ -239,18 +239,6 @@ function getPromisifiedSdk(requestFetchAdapter, config) {
     });
   };
 
-  sdk.reportStatusDeploy = (deployedPackage, status, previousLabelOrAppVersion, previousDeploymentKey) => {
-    return new Promise((resolve, reject) => {
-      module.exports.AcquisitionSdk.prototype.reportStatusDeploy.call(sdk, deployedPackage, status, previousLabelOrAppVersion, previousDeploymentKey, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  };
-
   return sdk;
 }
 
@@ -277,8 +265,7 @@ async function notifyApplicationReadyInternal() {
 
 async function tryReportStatus(statusReport, retryOnAppResume) {
   const config = await getConfiguration();
-  const previousLabelOrAppVersion = statusReport.previousLabelOrAppVersion;
-  const previousDeploymentKey = statusReport.previousDeploymentKey || config.deploymentKey;
+
   try {
     if (statusReport.appVersion) {
       log(`Reporting binary update (${statusReport.appVersion})`);
@@ -286,9 +273,6 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
       if (!config.deploymentKey) {
         throw new Error("Deployment key is missed");
       }
-
-      const sdk = getPromisifiedSdk(requestFetchAdapter, config);
-      await sdk.reportStatusDeploy(/* deployedPackage */ null, /* status */ null, previousLabelOrAppVersion, previousDeploymentKey);
     } else {
       const label = statusReport.package.label;
       if (statusReport.status === "DeploymentSucceeded") {
@@ -297,10 +281,6 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
         log(`Reporting CodePush update rollback (${label})`);
         await NativeCodePush.setLatestRollbackInfo(statusReport.package.packageHash);
       }
-
-      config.deploymentKey = statusReport.package.deploymentKey;
-      const sdk = getPromisifiedSdk(requestFetchAdapter, config);
-      await sdk.reportStatusDeploy(statusReport.package, statusReport.status, previousLabelOrAppVersion, previousDeploymentKey);
     }
 
     NativeCodePush.recordStatusReported(statusReport);
