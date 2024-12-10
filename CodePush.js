@@ -147,7 +147,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           return undefined;
         }
       })()
-      : (() => { throw new Error('updateChecker is not set') })()
+      : (() => { throw new Error('updateChecker is not set') })();
 
   if (sharedCodePushOptions.bundleHost && update) {
     const fileName = typeof update.downloadUrl === 'string' ? update.downloadUrl.split('/').pop() : null;
