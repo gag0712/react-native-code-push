@@ -1,6 +1,4 @@
-import { AcquisitionManager as Sdk } from "code-push/script/acquisition-sdk";
 import { Alert } from "./AlertAdapter";
-import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, Platform } from "react-native";
 import log from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
@@ -30,7 +28,6 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
    * deployments (e.g. an early access deployment for insiders).
    */
   const config = deploymentKey ? { ...nativeConfig, ...{ deploymentKey } } : nativeConfig;
-  const sdk = getPromisifiedSdk(requestFetchAdapter, config);
 
   // Use dynamically overridden getCurrentPackage() during tests.
   const localPackage = await module.exports.getCurrentPackage();
@@ -146,15 +143,11 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
           };
         } catch (error) {
           log(`An error has occurred at update checker : ${error.stack}`);
-          if (sharedCodePushOptions.fallbackToAppCenter) {
-            return await sdk.queryUpdateWithCurrentPackage(queryPackage);
-          } else {
-            // update will not happen
-            return undefined;
-          }
+          // update will not happen
+          return undefined;
         }
       })()
-      : await sdk.queryUpdateWithCurrentPackage(queryPackage);
+      : (() => { throw new Error('updateChecker is not set') })();
 
   if (sharedCodePushOptions.bundleHost && update) {
     const fileName = typeof update.downloadUrl === 'string' ? update.downloadUrl.split('/').pop() : null;
@@ -193,7 +186,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
 
     return null;
   } else {
-    const remotePackage = { ...update, ...PackageMixins.remote(sdk.reportStatusDownload) };
+    const remotePackage = { ...update, ...PackageMixins.remote() };
     remotePackage.failedInstall = await NativeCodePush.isFailedUpdate(remotePackage.packageHash);
     remotePackage.deploymentKey = deploymentKey || nativeConfig.deploymentKey;
     return remotePackage;
@@ -228,48 +221,6 @@ async function getUpdateMetadata(updateState) {
   return updateMetadata;
 }
 
-function getPromisifiedSdk(requestFetchAdapter, config) {
-  // Use dynamically overridden AcquisitionSdk during tests.
-  const sdk = new module.exports.AcquisitionSdk(requestFetchAdapter, config);
-  sdk.queryUpdateWithCurrentPackage = (queryPackage) => {
-    return new Promise((resolve, reject) => {
-      module.exports.AcquisitionSdk.prototype.queryUpdateWithCurrentPackage.call(sdk, queryPackage, (err, update) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(update);
-        }
-      });
-    });
-  };
-
-  sdk.reportStatusDeploy = (deployedPackage, status, previousLabelOrAppVersion, previousDeploymentKey) => {
-    return new Promise((resolve, reject) => {
-      module.exports.AcquisitionSdk.prototype.reportStatusDeploy.call(sdk, deployedPackage, status, previousLabelOrAppVersion, previousDeploymentKey, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  };
-
-  sdk.reportStatusDownload = (downloadedPackage) => {
-    return new Promise((resolve, reject) => {
-      module.exports.AcquisitionSdk.prototype.reportStatusDownload.call(sdk, downloadedPackage, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  };
-
-  return sdk;
-}
-
 // This ensures that notifyApplicationReadyInternal is only called once
 // in the lifetime of this module instance.
 const notifyApplicationReady = (() => {
@@ -293,8 +244,7 @@ async function notifyApplicationReadyInternal() {
 
 async function tryReportStatus(statusReport, retryOnAppResume) {
   const config = await getConfiguration();
-  const previousLabelOrAppVersion = statusReport.previousLabelOrAppVersion;
-  const previousDeploymentKey = statusReport.previousDeploymentKey || config.deploymentKey;
+
   try {
     if (statusReport.appVersion) {
       log(`Reporting binary update (${statusReport.appVersion})`);
@@ -302,9 +252,6 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
       if (!config.deploymentKey) {
         throw new Error("Deployment key is missed");
       }
-
-      const sdk = getPromisifiedSdk(requestFetchAdapter, config);
-      await sdk.reportStatusDeploy(/* deployedPackage */ null, /* status */ null, previousLabelOrAppVersion, previousDeploymentKey);
     } else {
       const label = statusReport.package.label;
       if (statusReport.status === "DeploymentSucceeded") {
@@ -313,10 +260,6 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
         log(`Reporting CodePush update rollback (${label})`);
         await NativeCodePush.setLatestRollbackInfo(statusReport.package.packageHash);
       }
-
-      config.deploymentKey = statusReport.package.deploymentKey;
-      const sdk = getPromisifiedSdk(requestFetchAdapter, config);
-      await sdk.reportStatusDeploy(statusReport.package, statusReport.status, previousLabelOrAppVersion, previousDeploymentKey);
     }
 
     NativeCodePush.recordStatusReported(statusReport);
@@ -639,8 +582,6 @@ let CodePush;
  *   setRuntimeVersion(version: string): void,
  *   versioning: Versioning
  *   setVersioning(versioning: Versioning): void
- *   fallbackToAppCenter: boolean,
- *   setFallbackToAppCenter(enable: boolean): void
  * }}
  */
 const sharedCodePushOptions = {
@@ -668,10 +609,6 @@ const sharedCodePushOptions = {
   setUpdateChecker(updateCheckerFunction) {
     if (updateCheckerFunction && typeof updateCheckerFunction !== 'function') throw new Error('pass a function to setUpdateChecker');
     this.updateChecker = updateCheckerFunction;
-  },
-  fallbackToAppCenter: true,
-  setFallbackToAppCenter(enable) {
-    this.fallbackToAppCenter = enable;
   }
 }
 
@@ -699,7 +636,6 @@ function codePushify(options = {}) {
   sharedCodePushOptions.setBundleHost(options.bundleHost);
   sharedCodePushOptions.setRuntimeVersion(options.runtimeVersion);
   sharedCodePushOptions.setUpdateChecker(options.updateChecker);
-  sharedCodePushOptions.setFallbackToAppCenter(options.fallbackToAppCenter);
 
   const decorator = (RootComponent) => {
     class CodePushComponent extends React.Component {
@@ -772,7 +708,6 @@ function codePushify(options = {}) {
 if (NativeCodePush) {
   CodePush = codePushify;
   Object.assign(CodePush, {
-    AcquisitionSdk: Sdk,
     checkForUpdate,
     getConfiguration,
     getCurrentPackage,

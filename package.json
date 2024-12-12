@@ -41,7 +41,6 @@
     "url": "git+https://github.com/Soomgo-Mobile/react-native-code-push.git"
   },
   "dependencies": {
-    "code-push": "^4.2.2",
     "commander": "^12.1.0",
     "glob": "^7.1.7",
     "hoist-non-react-statics": "^3.3.2",
