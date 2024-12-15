@@ -12,7 +12,4 @@ module.exports = {
   bundleHost: "bundleHost",
   runtimeVersion: "runtimeVersion",
   versioning: CustomVersioning,
-  updateChecker: (updateRequest) => {
-    // ..my Implementation
-  },
 };

@@ -66,7 +66,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
        * `releaseHistory`
        * @type {ReleaseHistoryInterface}
        */
-      const releaseHistory = await sharedCodePushOptions.updateChecker(updateRequest);
+      const releaseHistory = await sharedCodePushOptions.releaseHistoryFetcher(updateRequest);
 
       /**
        * `runtimeVersion`
@@ -564,7 +564,7 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
 let CodePush;
 
 /**
- * @callback updateChecker
+ * @callback releaseHistoryFetcher
  * @param {UpdateCheckRequest} updateRequest Current package information to check for updates.
  * @returns {Promise<ReleaseHistoryInterface>} The release history of the updates deployed for a specific binary version.
  */
@@ -574,8 +574,8 @@ let CodePush;
  * @type {{
  *   bundleHost: string | undefined,
  *   setBundleHost(host: string): void,
- *   updateChecker: updateChecker | undefined,
- *   setUpdateChecker(updateCheckerFunction: updateChecker): void,
+ *   releaseHistoryFetcher: releaseHistoryFetcher | undefined,
+ *   setReleaseHistoryFetcher(releaseHistoryFetcherFunction: releaseHistoryFetcher): void,
  *   runtimeVersion: string,
  *   setRuntimeVersion(version: string): void,
  *   versioning: Versioning
@@ -603,10 +603,10 @@ const sharedCodePushOptions = {
     }
     this.versioning = versioning
   },
-  updateChecker: undefined,
-  setUpdateChecker(updateCheckerFunction) {
-    if (!updateCheckerFunction || typeof updateCheckerFunction !== 'function') throw new Error('pass a function to updateChecker');
-    this.updateChecker = updateCheckerFunction;
+  releaseHistoryFetcher: undefined,
+  setReleaseHistoryFetcher(releaseHistoryFetcherFunction) {
+    if (!releaseHistoryFetcherFunction || typeof releaseHistoryFetcherFunction !== 'function') throw new Error('pass a function to releaseHistoryFetcher');
+    this.releaseHistoryFetcher = releaseHistoryFetcherFunction;
   }
 }
 
@@ -633,7 +633,7 @@ function codePushify(options = {}) {
   sharedCodePushOptions.setVersioning(options.versioning ?? SemverVersioning);
   sharedCodePushOptions.setBundleHost(options.bundleHost);
   sharedCodePushOptions.setRuntimeVersion(options.runtimeVersion);
-  sharedCodePushOptions.setUpdateChecker(options.updateChecker);
+  sharedCodePushOptions.setReleaseHistoryFetcher(options.releaseHistoryFetcher);
 
   const decorator = (RootComponent) => {
     class CodePushComponent extends React.Component {
