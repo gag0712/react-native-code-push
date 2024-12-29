@@ -1,8 +1,8 @@
-const { prepareToBundleJS } = require('../functions/prepareToBundleJS');
-const { runReactNativeBundleCommand } = require('../functions/runReactNativeBundleCommand');
-const { getReactTempDir } = require('../functions/getReactTempDir');
-const { runHermesEmitBinaryCommand } = require('../functions/runHermesEmitBinaryCommand');
-const { makeCodePushBundle } = require('../functions/makeCodePushBundle');
+const { prepareToBundleJS } = require('../../functions/prepareToBundleJS');
+const { runReactNativeBundleCommand } = require('../../functions/runReactNativeBundleCommand');
+const { getReactTempDir } = require('../../functions/getReactTempDir');
+const { runHermesEmitBinaryCommand } = require('../../functions/runHermesEmitBinaryCommand');
+const { makeCodePushBundle } = require('../../functions/makeCodePushBundle');
 
 /**
  * @param platform {string} 'ios' | 'android'
@@ -11,7 +11,7 @@ const { makeCodePushBundle } = require('../functions/makeCodePushBundle');
  * @param bundleName {string|undefined}
  * @return {Promise<{bundleFileName: string, packageHash: string}>}
  */
-async function runBundleCodePush(
+async function bundleCodePush(
   platform = 'ios',
   outputRootPath = 'build',
   entryFile = 'index.ts',
@@ -46,4 +46,4 @@ async function runBundleCodePush(
     return { bundleFileName, packageHash }; // returns for release command implementation
 }
 
-module.exports = { runBundleCodePush };
+module.exports = { bundleCodePush: bundleCodePush };
