@@ -13,9 +13,11 @@ program
   .name("@bravemobile/react-native-code-push CLI")
   .description("Command line interface for @bravemobile/react-native-code-push")
   .version("1.0.0")
-  .action(async () => {
+  .option('-c, --config <path>', 'set config file name (JS/TS)', 'codepush.config.ts')
+  .action(async (options) => {
     showLogo();
-    const config = findAndReadConfigFile(process.cwd());
+    const config = findAndReadConfigFile(process.cwd(), options.config);
+    console.log(JSON.stringify(Object.keys(config)))
 
     // TODO: implement interactive mode
   });
