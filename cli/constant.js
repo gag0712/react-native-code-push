@@ -1,3 +1,3 @@
 module.exports = {
-  configFileName: "codepush.config.js",
+  configFileName: "codepush.config.ts",
 };

@@ -33,12 +33,12 @@ export abstract class BaseVersioning {
 export type ReleaseVersion = string;
 
 /**
- * The interface representing the release information that the `updateChecker` function must return.
+ * The interface representing the release information that the `releaseHistoryFetcher` function must return.
  */
 export type ReleaseHistoryInterface = Record<ReleaseVersion, ReleaseInfo>;
 
 /**
- * The interface that represents a single deployment history entry, which the `updateChecker` function should return.
+ * The interface that represents a single deployment history entry, which the `releaseHistoryFetcher` function should return.
  */
 export interface ReleaseInfo {
     enabled: boolean;
@@ -95,7 +95,7 @@ export interface CodePushOptions extends CodePushSharedOptions, SyncOptions {
     /**
      * Specifies a function to get the release history.
      */
-    updateChecker: (updateRequest: UpdateCheckRequest) => Promise<ReleaseHistoryInterface>;
+    releaseHistoryFetcher: (updateRequest: UpdateCheckRequest) => Promise<ReleaseHistoryInterface>;
 }
 
 export interface DownloadProgress {
