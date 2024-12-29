@@ -45,4 +45,6 @@ program.command('bundle')
     )
   });
 
+require('./commands/uploadCommand')
+
 program.parse();
