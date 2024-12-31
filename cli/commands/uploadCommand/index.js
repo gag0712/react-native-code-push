@@ -6,7 +6,7 @@ const { upload } = require("./upload");
 program.command('upload')
     .requiredOption('-s, --source-file-path <string>', 'path to the file to upload')
     .requiredOption('-t, --target <string>', 'upload target')
-    .option('-c, --config <path>', 'set config file name (JS/TS)', 'codepush.config.ts')
+    .option('-c, --config <path>', 'set config file name (JS/TS)', 'code-push.config.ts')
     .option('-p, --preserve-file', 'do not delete uploaded file after upload')
     /**
      * @param {Object} options

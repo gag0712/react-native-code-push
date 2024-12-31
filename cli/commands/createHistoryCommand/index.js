@@ -7,7 +7,7 @@ program.command('create-history')
     .requiredOption('-v, --target-version <string>', 'target app binary version')
     .addOption(new Option('-p, --platform <type>', 'platform').choices(['ios', 'android']).default('ios'))
     .option('-i, --identifier <string>', 'additional characters to identify the release')
-    .option('-c, --config <path>', 'set config file name (JS/TS)', 'codepush.config.ts')
+    .option('-c, --config <path>', 'set config file name (JS/TS)', 'code-push.config.ts')
     /**
      * @param {Object} options
      * @param {string} options.targetVersion
