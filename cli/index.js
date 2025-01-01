@@ -27,6 +27,11 @@ require("./commands/bundleCommand");
  */
 require('./commands/createHistoryCommand');
 
+/**
+ * npx code-push update-history
+ */
+require('./commands/updateHistoryCommand');
+
 require('./commands/uploadCommand');
 
 program.parse();
