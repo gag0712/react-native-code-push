@@ -13,9 +13,9 @@ module.exports = function (babel, options) {
   const configPath =
     options.configPath != null
       ? path.resolve(options.configPath)
-      : path.resolve(process.cwd(), "codepush.config.js");
+      : path.resolve(process.cwd(), "code-push.config.js");
 
-  // Load config and imports from `codepush.config.js`
+  // Load config and imports from `code-push.config.js`
   const { config, configImports, importedIdentifiers } = loadConfig(
     babel,
     configPath
@@ -32,10 +32,10 @@ module.exports = function (babel, options) {
           },
         });
 
-        // Add missing imports from codepush.config.js to the input file
+        // Add missing imports from code-push.config.js to the input file
         configImports.forEach((importNode) => {
           if (!existingImports.has(importNode.source.value)) {
-            // Clone the import node from codepush.config.js and add it to the input file
+            // Clone the import node from code-push.config.js and add it to the input file
             path.node.body.unshift(t.cloneNode(importNode));
           }
         });
@@ -82,7 +82,7 @@ module.exports = function (babel, options) {
 function loadConfig(babel, configPath) {
   if (!fs.existsSync(configPath)) {
     throw new Error(
-      "codepush.config.js not found. Please ensure it exists in the root directory."
+      "code-push.config.js not found. Please ensure it exists in the root directory."
     );
   }
 
