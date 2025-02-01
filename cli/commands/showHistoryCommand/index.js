@@ -3,7 +3,7 @@ const { findAndReadConfigFile } = require("../../utils/fsUtils");
 
 program.command('show-history')
     .description('Retrieves and prints the release history of a specific binary version.\n`getReleaseHistory` function should be implemented in the config file.')
-    .requiredOption('-b, --binary-version <string>', '(required) The target binary version for retrieving the release history.')
+    .requiredOption('-b, --binary-version <string>', '(Required) The target binary version for retrieving the release history.')
     .addOption(new Option('-p, --platform <type>', 'platform').choices(['ios', 'android']).default('ios'))
     .option('-i, --identifier <string>', 'reserved characters to distinguish the release.')
     .option('-c, --config <path>', 'configuration file name (JS/TS)', 'code-push.config.ts')

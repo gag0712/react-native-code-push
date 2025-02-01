@@ -4,10 +4,10 @@ const { findAndReadConfigFile } = require("../../utils/fsUtils");
 const { release } = require("./release");
 
 program.command('release')
-    .requiredOption('-b, --binary-version <string>', 'target app binary version')
-    .requiredOption('-v, --app-version <string>', 'The app version to be released')
+    .description('Deploys a new CodePush update for a target binary app.\nAfter creating the CodePush bundle, it uploads the file and updates the ReleaseHistory information.\n`bundleUploader`, `getReleaseHistory`, and `setReleaseHistory` functions should be implemented in the config file.')
+    .requiredOption('-v, --app-version <string>', '(Required) The app version to be released. It must be greater than the binary version.')
     .addOption(new Option('-p, --platform <type>', 'platform').choices(['ios', 'android']).default('ios'))
-    .option('-i, --identifier <string>', 'additional characters to identify the release')
+    .option('-i, --identifier <string>', 'reserved characters to distinguish the release.')
     .option('-c, --config <path>', 'set config file name (JS/TS)', 'code-push.config.ts')
     .option('-o, --output-path <string>', 'path to output root directory', 'build')
     .option('-e, --entry-file <string>', 'path to JS/TS entry file', 'index.ts')
