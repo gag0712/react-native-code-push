@@ -13,20 +13,6 @@ export interface UpdateCheckRequest {
     package_hash?: string;
 }
 
-type SortingMethod = (a: ReleaseVersion, b: ReleaseVersion) => number;
-
-export abstract class BaseVersioning {
-    constructor(releaseHistory: ReleaseHistoryInterface, sortingMethod?: SortingMethod)
-    protected originalReleaseHistory: ReleaseHistoryInterface;
-    protected sortedReleaseHistory: [ReleaseVersion, ReleaseInfo][];
-    protected get sortedMandatoryReleaseHistory(): [ReleaseVersion, ReleaseInfo][];
-    protected get sortedEnabledReleaseHistory(): [ReleaseVersion, ReleaseInfo][];
-    protected shouldRollback: (runtimeVersion: ReleaseVersion) => boolean;
-    findLatestRelease: (releaseHistory: ReleaseHistoryInterface) => [ReleaseVersion, ReleaseInfo];
-    checkIsMandatory: (runtimeVersion: ReleaseVersion) => boolean;
-    shouldRollbackToBinary: (runtimeVersion: ReleaseVersion) => boolean;
-}
-
 /**
  * Alias for a string representing a released CodePush update version.
  */
@@ -62,31 +48,7 @@ export interface UpdateCheckResponse {
     is_mandatory?: boolean;
 }
 
-interface CodePushSharedOptions {
-    /**
-     * Specifies the location of the update's file. It should include the http scheme and host.
-     * It is used for self-hosting.
-     * Defaults to AppCenter storage.
-     */
-    bundleHost?: string;
-    /**
-     * Specifies the version of the app that is currently running.
-     * It can be the version from package.json (or another source).
-     */
-    runtimeVersion: string;
-    /**
-     * Specifies versioning policy.
-     * Defaults to `SemverVersioning`
-     */
-    versioning?: typeof BaseVersioning;
-}
-
-export interface CodePushConfigFile extends CodePushSharedOptions {
-    awsCredential: string;
-    // TODO: More fields
-}
-
-export interface CodePushOptions extends CodePushSharedOptions, SyncOptions {
+export interface CodePushOptions extends SyncOptions {
     /**
      * Specifies when you would like to synchronize updates with the CodePush server.
      * Defaults to codePush.CheckFrequency.ON_APP_START.
@@ -404,12 +366,6 @@ declare namespace CodePush {
      * @param handleBinaryVersionMismatchCallback An optional callback for handling target binary version mismatch
      */
     function sync(options?: SyncOptions, syncStatusChangedCallback?: SyncStatusChangedCallback, downloadProgressCallback?: DownloadProgressCallback, handleBinaryVersionMismatchCallback?: HandleBinaryVersionMismatchCallback): Promise<SyncStatus>;
-
-    const Versioning: {
-        BASE: typeof BaseVersioning,
-        SEMVER: typeof BaseVersioning,
-        INCREMENTAL: typeof BaseVersioning,
-    };
 
     /**
      * Indicates when you would like an installed update to actually be applied.
