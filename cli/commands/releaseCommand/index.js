@@ -12,7 +12,6 @@ program.command('release')
     .option('-o, --output-path <string>', 'path to output root directory', 'build')
     .option('-e, --entry-file <string>', 'path to JS/TS entry file', 'index.ts')
     .option('-j, --js-bundle-name <string>', 'JS bundle file name (default-ios: "main.jsbundle" / default-android: "index.android.bundle")')
-    .requiredOption('-d, --destination-path <string>', 'CodePush bundle upload destination path')
     .option('-m, --mandatory <bool>', 'make the release to be mandatory', parseBoolean, false)
     .option('--enable <bool>', 'make the release to be enabled', parseBoolean, true)
     /**
@@ -25,7 +24,6 @@ program.command('release')
      * @param {string} options.outputPath
      * @param {string} options.entryFile
      * @param {string} options.bundleName
-     * @param {string} options.destinationPath
      * @param {string} options.mandatory
      * @param {string} options.enable
      * @return {void}
