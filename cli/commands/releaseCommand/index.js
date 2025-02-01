@@ -1,4 +1,5 @@
 const { program, Option } = require("commander");
+const SemVer = require('semver');
 const { findAndReadConfigFile } = require("../../utils/fsUtils");
 const { release } = require("./release");
 
@@ -30,6 +31,11 @@ program.command('release')
      * @return {void}
      */
     .action(async (options) => {
+        if (SemVer.lte(options.appVersion, options.binaryVersion)) {
+            console.error('The app version must be greater than the binary version.');
+            process.exit(1);
+        }
+
         const config = findAndReadConfigFile(process.cwd(), options.config);
 
         await release(
