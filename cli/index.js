@@ -37,4 +37,6 @@ require('./commands/releaseCommand');
 
 require('./commands/uploadCommand');
 
+require('./commands/showHistoryCommand')
+
 program.parse();
