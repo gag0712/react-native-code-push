@@ -42,13 +42,9 @@
   },
   "dependencies": {
     "commander": "^12.1.0",
-    "glob": "^7.1.7",
     "hoist-non-react-statics": "^3.3.2",
-    "inquirer": "^8.2.6",
-    "plist": "^3.0.4",
     "semver": "^7.3.5",
     "shelljs": "^0.8.5",
-    "xcode": "3.0.1",
     "yazl": "^3.3.1"
   },
   "devDependencies": {
@@ -75,7 +71,6 @@
     "mkdirp": "latest",
     "mocha": "^9.2.0",
     "q": "^1.5.1",
-    "run-sequence": "latest",
     "shx": "^0.3.4",
     "slash": "^3.0.0",
     "ts-node": "^10.9.2",
