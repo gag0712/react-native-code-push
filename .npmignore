@@ -107,4 +107,4 @@ packages/
 !cli/commands/releaseCommand/
 
 # currently not used
-!babel-plugin-code-push/
+babel-plugin-code-push/
