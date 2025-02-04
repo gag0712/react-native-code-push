@@ -5,6 +5,7 @@ const { release } = require("./release");
 
 program.command('release')
     .description('Deploys a new CodePush update for a target binary app.\nAfter creating the CodePush bundle, it uploads the file and updates the ReleaseHistory information.\n`bundleUploader`, `getReleaseHistory`, and `setReleaseHistory` functions should be implemented in the config file.')
+    .requiredOption('-b, --binary-version <string>', '(Required) The target binary version')
     .requiredOption('-v, --app-version <string>', '(Required) The app version to be released. It must be greater than the binary version.')
     .addOption(new Option('-p, --platform <type>', 'platform').choices(['ios', 'android']).default('ios'))
     .option('-i, --identifier <string>', 'reserved characters to distinguish the release.')
