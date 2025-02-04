@@ -103,3 +103,8 @@ packages/
 
 .watchmanconfig
 
+# prevent CLI code ignored (ignored by "[Rr]elease*/")
+!cli/commands/releaseCommand/
+
+# currently not used
+!babel-plugin-code-push/
