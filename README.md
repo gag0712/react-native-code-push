@@ -29,7 +29,6 @@ Specify a function to perform the update check using the `updateChecker` option.
 
 (The `bundleHost` option can be used in combination.)
 
-`fallbackToAppCenter` : If an error occurs during the execution of the updateChecker function, the original update check behavior is performed as a fallback. (default: true)
 
 ```javascript
 const codePushOptions = {
@@ -41,7 +40,6 @@ const codePushOptions = {
     });
     return response;
   },
-  fallbackToAppCenter: true,
 };
 
 export default codePush(codePushOptions)(MyApp);
@@ -72,7 +70,6 @@ This plugin provides client-side integration for the [CodePush service](https://
 * [Getting Started](#getting-started)
     * [iOS Setup](docs/setup-ios.md)
     * [Android Setup](docs/setup-android.md)
-    * [Windows Setup](docs/setup-windows.md)
 * [Plugin Usage](#plugin-usage)
     * [Store Guideline Compliance](#store-guideline-compliance)
 * [Releasing Updates](#releasing-updates)
@@ -105,7 +102,6 @@ In order to ensure that your end users always have a functioning version of your
 
 - iOS (7+)
 - Android (4.1+) on TLS 1.2 compatible devices
-- Windows (UWP)
 
 We try our best to maintain backwards compatibility of our plugin with previous versions of React Native, but due to the nature of the platform, and the existence of breaking changes between releases, it is possible that you need to use a specific version of the CodePush plugin in order to support the exact version of React Native you are using. The following table outlines which CodePush plugin versions officially support the respective React Native versions:
 
@@ -181,7 +177,6 @@ If you want to see how other projects have integrated with CodePush, you can che
 Then continue with installing the native module
   * [iOS Setup](docs/setup-ios.md)
   * [Android Setup](docs/setup-android.md)
-  * [Windows Setup](docs/setup-windows.md)
 
 
 ## Plugin Usage

@@ -5,7 +5,7 @@ import log from "./logging";
 // package objects with additional functionality/properties
 // beyond what is included in the metadata sent by the server.
 module.exports = (NativeCodePush) => {
-  const remote = (reportStatusDownload) => {
+  const remote = () => {
     return {
       async download(downloadProgressCallback) {
         if (!this.downloadUrl) {
@@ -29,13 +29,6 @@ module.exports = (NativeCodePush) => {
           Object.keys(updatePackageCopy).forEach((key) => (typeof updatePackageCopy[key] === 'function') && delete updatePackageCopy[key]);
 
           const downloadedPackage = await NativeCodePush.downloadUpdate(updatePackageCopy, !!downloadProgressCallback);
-
-          if (reportStatusDownload) {
-            reportStatusDownload(this)
-            .catch((err) => {
-              log(`Report download status failed: ${err}`);
-            });
-          }
 
           return { ...downloadedPackage, ...local };
         } finally {

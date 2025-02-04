@@ -1,9 +1,8 @@
-import { AcquisitionManager as Sdk } from "code-push/script/acquisition-sdk";
 import { Alert } from "./AlertAdapter";
-import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, Platform } from "react-native";
 import log from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
+import { SemverVersioning } from './versioning/SemverVersioning'
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
 const PackageMixins = require("./package-mixins")(NativeCodePush);
@@ -27,7 +26,6 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
    * deployments (e.g. an early access deployment for insiders).
    */
   const config = deploymentKey ? { ...nativeConfig, ...{ deploymentKey } } : nativeConfig;
-  const sdk = getPromisifiedSdk(requestFetchAdapter, config);
 
   // Use dynamically overridden getCurrentPackage() during tests.
   const localPackage = await module.exports.getCurrentPackage();
@@ -50,60 +48,102 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
     }
   }
 
-  const update = sharedCodePushOptions.updateChecker
-      ? await (async () => {
-        try {
-          // refer to `UpdateCheckRequest` type inside code-push SDK
-          const updateRequest = {
-            deployment_key: config.deploymentKey,
-            app_version: queryPackage.appVersion,
-            package_hash: queryPackage.packageHash,
-            is_companion: config.ignoreAppVersion,
-            label: queryPackage.label,
-            client_unique_id: config.clientUniqueId,
-          };
+  const update = await (async () => {
+    try {
+      // refer to `UpdateCheckRequest` type inside code-push SDK
+      const updateRequest = {
+        deployment_key: config.deploymentKey,
+        app_version: queryPackage.appVersion,
+        package_hash: queryPackage.packageHash,
+        is_companion: config.ignoreAppVersion,
+        label: queryPackage.label,
+        client_unique_id: config.clientUniqueId,
+      };
 
-          const response = await sharedCodePushOptions.updateChecker(updateRequest);
+      /**
+       * `releaseHistory`
+       * @type {ReleaseHistoryInterface}
+       */
+      const releaseHistory = await sharedCodePushOptions.releaseHistoryFetcher(updateRequest);
 
-          // extracted from the internal processing of the code-push SDK
-          const updateInfo = response.update_info;
-          if (!updateInfo) {
-            return null;
-          } else if (updateInfo.update_app_version) {
-            return { updateAppVersion: true, appVersion: updateInfo.target_binary_range };
-          } else if (!updateInfo.is_available) {
-            return null;
-          }
+      /**
+       * `runtimeVersion`
+       * The version of currently running CodePush update. (It can be undefined if the app is running without CodePush update.)
+       * @type {string|undefined}
+       */
+      const runtimeVersion = updateRequest.label;
 
-          // refer to `RemotePackage` type inside code-push SDK
-          return {
-            deploymentKey: config.deploymentKey,
-            description: updateInfo.description ?? '',
-            label: updateInfo.label ?? '',
-            appVersion: updateInfo.target_binary_range ?? '',
-            isMandatory: updateInfo.is_mandatory ?? false,
-            packageHash: updateInfo.package_hash ?? '',
-            packageSize: updateInfo.package_size ?? 0,
-            downloadUrl: updateInfo.download_url ?? '',
-          };
-        } catch (error) {
-          log(`An error has occurred at update checker : ${error.stack}`);
-          if (sharedCodePushOptions.fallbackToAppCenter) {
-            return await sdk.queryUpdateWithCurrentPackage(queryPackage);
-          } else {
-            // update will not happen
-            return undefined;
-          }
-        }
-      })()
-      : await sdk.queryUpdateWithCurrentPackage(queryPackage);
+      const versioning = new SemverVersioning(releaseHistory);
 
-  if (sharedCodePushOptions.bundleHost && update) {
-    const fileName = typeof update.downloadUrl === 'string' ? update.downloadUrl.split('/').pop() : null;
-    if (fileName) {
-      update.downloadUrl = sharedCodePushOptions.bundleHost + fileName;
+      const shouldRollbackToBinary = versioning.shouldRollbackToBinary(runtimeVersion)
+      if (shouldRollbackToBinary) {
+        // Reset to latest major version and restart
+        CodePush.clearUpdates();
+        CodePush.allowRestart();
+        CodePush.restartApp();
+      }
+
+      const [latestVersion, latestReleaseInfo] = versioning.findLatestRelease();
+      const isMandatory = versioning.checkIsMandatory(runtimeVersion);
+
+      /**
+       * Convert the update information decided from `ReleaseHistoryInterface` to be passed to the library core (original CodePush library).
+       *
+       * @type {UpdateCheckResponse} the interface required by the original CodePush library.
+       */
+      const updateInfo = {
+        download_url: latestReleaseInfo.downloadUrl,
+        // (`enabled` will always be true in the release information obtained from the previous process.)
+        is_available: latestReleaseInfo.enabled,
+        package_hash: latestReleaseInfo.packageHash,
+        is_mandatory: isMandatory,
+        // 이건 항상 현재 실행중인 바이너리 버전을 전달한다.
+        // 조회한 업데이트가 현재 바이너리를 타겟하는가? 를 API 서버에서 판단한 다음, 해당 된다면 런타임 바이너리 버전을 그대로 돌려주던 것임.
+        // 우리는 updateChecker 조회 결과가 넘어왔다면 해당 정보는 현재 런타임 바이너리에 호환됨을 전제로 하고있음.
+        target_binary_range: updateRequest.app_version,
+        /**
+         * Retrieve the update version from the ReleaseHistory and store it in the label.
+         * This information can be accessed at runtime through the CodePush bundle metadata.
+         */
+        label: latestVersion,
+        // false 전달해야 정상 동작함
+        update_app_version: false,
+        // 그닥 쓸모 없음
+        description: '',
+        // 런타임에 안쓰임
+        is_disabled: false,
+        // 런타임에 안쓰임
+        package_size: 0,
+        // 런타임에 안쓰임
+        should_run_binary_version: false,
+      }
+
+
+      if (!updateInfo) {
+        return null;
+      } else if (updateInfo.update_app_version) {
+        return { updateAppVersion: true, appVersion: updateInfo.target_binary_range };
+      } else if (!updateInfo.is_available) {
+        return null;
+      }
+
+      // refer to `RemotePackage` type inside code-push SDK
+      return {
+        deploymentKey: config.deploymentKey,
+        description: updateInfo.description ?? '',
+        label: updateInfo.label ?? '',
+        appVersion: updateInfo.target_binary_range ?? '',
+        isMandatory: updateInfo.is_mandatory ?? false,
+        packageHash: updateInfo.package_hash ?? '',
+        packageSize: updateInfo.package_size ?? 0,
+        downloadUrl: updateInfo.download_url ?? '',
+      };
+    } catch (error) {
+      log(`An error has occurred at update checker :`, error);
+      // update will not happen
+      return undefined;
     }
-  }
+  })();
 
   /*
    * There are four cases where checkForUpdate will resolve to null:
@@ -135,7 +175,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
 
     return null;
   } else {
-    const remotePackage = { ...update, ...PackageMixins.remote(sdk.reportStatusDownload) };
+    const remotePackage = { ...update, ...PackageMixins.remote() };
     remotePackage.failedInstall = await NativeCodePush.isFailedUpdate(remotePackage.packageHash);
     remotePackage.deploymentKey = deploymentKey || nativeConfig.deploymentKey;
     return remotePackage;
@@ -170,48 +210,6 @@ async function getUpdateMetadata(updateState) {
   return updateMetadata;
 }
 
-function getPromisifiedSdk(requestFetchAdapter, config) {
-  // Use dynamically overridden AcquisitionSdk during tests.
-  const sdk = new module.exports.AcquisitionSdk(requestFetchAdapter, config);
-  sdk.queryUpdateWithCurrentPackage = (queryPackage) => {
-    return new Promise((resolve, reject) => {
-      module.exports.AcquisitionSdk.prototype.queryUpdateWithCurrentPackage.call(sdk, queryPackage, (err, update) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(update);
-        }
-      });
-    });
-  };
-
-  sdk.reportStatusDeploy = (deployedPackage, status, previousLabelOrAppVersion, previousDeploymentKey) => {
-    return new Promise((resolve, reject) => {
-      module.exports.AcquisitionSdk.prototype.reportStatusDeploy.call(sdk, deployedPackage, status, previousLabelOrAppVersion, previousDeploymentKey, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  };
-
-  sdk.reportStatusDownload = (downloadedPackage) => {
-    return new Promise((resolve, reject) => {
-      module.exports.AcquisitionSdk.prototype.reportStatusDownload.call(sdk, downloadedPackage, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  };
-
-  return sdk;
-}
-
 // This ensures that notifyApplicationReadyInternal is only called once
 // in the lifetime of this module instance.
 const notifyApplicationReady = (() => {
@@ -235,8 +233,7 @@ async function notifyApplicationReadyInternal() {
 
 async function tryReportStatus(statusReport, retryOnAppResume) {
   const config = await getConfiguration();
-  const previousLabelOrAppVersion = statusReport.previousLabelOrAppVersion;
-  const previousDeploymentKey = statusReport.previousDeploymentKey || config.deploymentKey;
+
   try {
     if (statusReport.appVersion) {
       log(`Reporting binary update (${statusReport.appVersion})`);
@@ -244,9 +241,6 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
       if (!config.deploymentKey) {
         throw new Error("Deployment key is missed");
       }
-
-      const sdk = getPromisifiedSdk(requestFetchAdapter, config);
-      await sdk.reportStatusDeploy(/* deployedPackage */ null, /* status */ null, previousLabelOrAppVersion, previousDeploymentKey);
     } else {
       const label = statusReport.package.label;
       if (statusReport.status === "DeploymentSucceeded") {
@@ -255,10 +249,6 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
         log(`Reporting CodePush update rollback (${label})`);
         await NativeCodePush.setLatestRollbackInfo(statusReport.package.packageHash);
       }
-
-      config.deploymentKey = statusReport.package.deploymentKey;
-      const sdk = getPromisifiedSdk(requestFetchAdapter, config);
-      await sdk.reportStatusDeploy(statusReport.package, statusReport.status, previousLabelOrAppVersion, previousDeploymentKey);
     }
 
     NativeCodePush.recordStatusReported(statusReport);
@@ -346,7 +336,7 @@ function validateRollbackRetryOptions(rollbackRetryOptions) {
   return true;
 }
 
-var testConfig;
+let testConfig;
 
 // This function is only used for tests. Replaces the default SDK, configuration and native bridge
 function setUpTestDependencies(testSdk, providedTestConfig, testNativeBridge) {
@@ -565,39 +555,23 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
 let CodePush;
 
 /**
- * @callback updateChecker
+ * @callback releaseHistoryFetcher
  * @param {UpdateCheckRequest} updateRequest Current package information to check for updates.
- * @returns {Promise<{update_info: UpdateCheckResponse}>} The result of the update check. Follows the AppCenter API response interface.
+ * @returns {Promise<ReleaseHistoryInterface>} The release history of the updates deployed for a specific binary version.
  */
 
 /**
  * If you pass options once when calling `codePushify`, they will be shared with related functions.
  * @type {{
- *   bundleHost: string | undefined,
- *   setBundleHost(host: string): void,
- *   updateChecker: updateChecker | undefined,
- *   setUpdateChecker(updateCheckerFunction: updateChecker): void,
- *   fallbackToAppCenter: boolean,
- *   setFallbackToAppCenter(enable: boolean): void
+ *   releaseHistoryFetcher: releaseHistoryFetcher | undefined,
+ *   setReleaseHistoryFetcher(releaseHistoryFetcherFunction: releaseHistoryFetcher): void,
  * }}
  */
 const sharedCodePushOptions = {
-  bundleHost: undefined,
-  setBundleHost(host) {
-    if (host && typeof host !== 'string') throw new Error('pass a string to setBundleHost');
-    if (typeof host === 'string' && host.slice(-1) !== '/') {
-      host += '/';
-    }
-    this.bundleHost = host;
-  },
-  updateChecker: undefined,
-  setUpdateChecker(updateCheckerFunction) {
-    if (updateCheckerFunction && typeof updateCheckerFunction !== 'function') throw new Error('pass a function to setUpdateChecker');
-    this.updateChecker = updateCheckerFunction;
-  },
-  fallbackToAppCenter: true,
-  setFallbackToAppCenter(enable) {
-    this.fallbackToAppCenter = enable;
+  releaseHistoryFetcher: undefined,
+  setReleaseHistoryFetcher(releaseHistoryFetcherFunction) {
+    if (!releaseHistoryFetcherFunction || typeof releaseHistoryFetcherFunction !== 'function') throw new Error('pass a function to releaseHistoryFetcher');
+    this.releaseHistoryFetcher = releaseHistoryFetcherFunction;
   }
 }
 
@@ -621,9 +595,7 @@ function codePushify(options = {}) {
     );
   }
 
-  sharedCodePushOptions.setBundleHost(options.bundleHost);
-  sharedCodePushOptions.setUpdateChecker(options.updateChecker);
-  sharedCodePushOptions.setFallbackToAppCenter(options.fallbackToAppCenter);
+  sharedCodePushOptions.setReleaseHistoryFetcher(options.releaseHistoryFetcher);
 
   const decorator = (RootComponent) => {
     class CodePushComponent extends React.Component {
@@ -696,7 +668,6 @@ function codePushify(options = {}) {
 if (NativeCodePush) {
   CodePush = codePushify;
   Object.assign(CodePush, {
-    AcquisitionSdk: Sdk,
     checkForUpdate,
     getConfiguration,
     getCurrentPackage,
@@ -756,7 +727,7 @@ if (NativeCodePush) {
     DEFAULT_ROLLBACK_RETRY_OPTIONS: {
       delayInHours: 24,
       maxRetryAttempts: 1
-    }
+    },
   });
 } else {
   log("The CodePush module doesn't appear to be properly installed. Please double-check that everything is setup correctly.");
