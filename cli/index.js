@@ -35,8 +35,9 @@ require('./commands/updateHistoryCommand');
  */
 require('./commands/releaseCommand');
 
-require('./commands/uploadCommand');
-
+/**
+ * npx code-push show-history
+ */
 require('./commands/showHistoryCommand')
 
 program.parse();
