@@ -121,8 +121,8 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
 
       if (!updateInfo) {
         return null;
-      } else if (updateInfo.update_app_version) {
-        return { updateAppVersion: true, appVersion: updateInfo.target_binary_range };
+      } else if (!updateInfo.download_url) {
+        return null;
       } else if (!updateInfo.is_available) {
         return null;
       }
