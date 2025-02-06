@@ -15,6 +15,8 @@ program.command('release')
     .option('-j, --js-bundle-name <string>', 'JS bundle file name (default-ios: "main.jsbundle" / default-android: "index.android.bundle")')
     .option('-m, --mandatory <bool>', 'make the release to be mandatory', parseBoolean, false)
     .option('--enable <bool>', 'make the release to be enabled', parseBoolean, true)
+    .option('--skip-bundle <bool>', 'skip bundle process', parseBoolean, false)
+    .option('--output-bundle-dir <string>', 'name of directory containing the bundle file created by the "bundle" command', 'bundleOutput')
     /**
      * @param {Object} options
      * @param {string} options.binaryVersion
@@ -27,6 +29,8 @@ program.command('release')
      * @param {string} options.bundleName
      * @param {string} options.mandatory
      * @param {string} options.enable
+     * @param {string} options.skipBundle
+     * @param {string} options.outputBundleDir
      * @return {void}
      */
     .action(async (options) => {
@@ -45,6 +49,8 @@ program.command('release')
             options.bundleName,
             options.mandatory,
             options.enable,
+            options.skipBundle,
+            `${options.outputPath}/${options.outputBundleDir}`,
         )
 
         console.log('🚀 Release completed.')

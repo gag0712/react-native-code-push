@@ -7,12 +7,14 @@ program.command('bundle')
     .option('-o, --output-path <string>', 'path to output root directory', 'build')
     .option('-e, --entry-file <string>', 'path to JS/TS entry file', 'index.ts')
     .option('-b, --bundle-name <string>', 'bundle file name (default-ios: "main.jsbundle" / default-android: "index.android.bundle")')
+    .option('--output-bundle-dir <string>', 'name of directory containing the bundle file created by the "bundle" command', 'bundleOutput')
     /**
      * @param {Object} options
      * @param {string} options.platform
      * @param {string} options.outputPath
      * @param {string} options.entryFile
      * @param {string} options.bundleName
+     * @param {string} options.outputBundleDir
      * @return {void}
      */
     .action((options) => {
@@ -21,5 +23,6 @@ program.command('bundle')
             options.outputPath,
             options.entryFile,
             options.bundleName,
+            `${options.outputPath}/${options.outputBundleDir}`,
         )
     });

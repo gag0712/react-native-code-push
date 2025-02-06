@@ -524,7 +524,7 @@ export interface CliConfigInterface {
      * Used in the `release` command, and must return a URL that allows downloading the file after the upload is completed.
      * The URL is recorded in the ReleaseHistory, and the CodePush runtime library downloads the bundle file from this address.
      *
-     * @param source The relative path of the generated bundle file. (e.g., ./2f156929-e474-46cd-9c9c-27a841043d98)
+     * @param source The relative path of the generated bundle file. (e.g. build/bundleOutput/1087bc338fc45a961c...)
      * @param platform The target platform of the bundle file. This is the string passed when executing the CLI command. ('ios'/'android')
      * @param identifier An additional identifier string. This can be used to distinguish execution environments by incorporating it into the upload path or file name. This string is passed when executing the CLI command.
      */

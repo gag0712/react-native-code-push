@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { bundleCodePush } = require("../bundleCommand/bundleCodePush");
 const { addToReleaseHistory } = require("./addToReleaseHistory");
 
@@ -31,6 +32,8 @@ const { addToReleaseHistory } = require("./addToReleaseHistory");
  * @param jsBundleName {string}
  * @param mandatory {boolean}
  * @param enable {boolean}
+ * @param skipBundle {boolean}
+ * @param bundleDirectory {string}
  * @return {Promise<void>}
  */
 async function release(
@@ -46,17 +49,17 @@ async function release(
     jsBundleName,
     mandatory,
     enable,
+    skipBundle,
+    bundleDirectory,
 ) {
-    const { bundleFileName, packageHash } = await bundleCodePush(
-        platform,
-        outputPath,
-        entryFile,
-        jsBundleName,
-    );
+    const bundleFileName = skipBundle
+        ? readBundleFileNameFrom(bundleDirectory)
+        : await bundleCodePush(platform, outputPath, entryFile, jsBundleName, bundleDirectory);
+    const bundleFilePath = `${bundleDirectory}/${bundleFileName}`;
 
     const downloadUrl = await (async () => {
         try {
-            const { downloadUrl } = await bundleUploader(`./${bundleFileName}`, platform, identifier);
+            const { downloadUrl } = await bundleUploader(bundleFilePath, platform, identifier);
             return downloadUrl
         } catch (error) {
             console.error('Failed to upload the bundle file. Exiting the program.', error)
@@ -68,7 +71,7 @@ async function release(
         appVersion,
         binaryVersion,
         downloadUrl,
-        packageHash,
+        bundleFileName,
         getReleaseHistory,
         setReleaseHistory,
         platform,
@@ -77,12 +80,26 @@ async function release(
         enable,
     )
 
-    deleteUploadedBundleFile(bundleFileName);
+    cleanUpOutputs(outputPath);
 }
 
-function deleteUploadedBundleFile(bundleFileName) {
-    const fs = require('fs');
-    fs.unlinkSync(`./${bundleFileName}`);
+function cleanUpOutputs(dir) {
+    fs.rmSync(dir, { recursive: true });
+}
+
+/**
+ * @param bundleDirectory {string}
+ * @return {string}
+ */
+function readBundleFileNameFrom(bundleDirectory) {
+    const files = fs.readdirSync(bundleDirectory);
+    if (files.length !== 1) {
+        console.error('The bundlePath must contain only one file.');
+        process.exit(1);
+    }
+    const path = require('path');
+    const bundleFilePath = path.join(bundleDirectory, files[0]);
+    return path.basename(bundleFilePath);
 }
 
 module.exports = { release: release }
