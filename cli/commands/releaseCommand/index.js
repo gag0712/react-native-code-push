@@ -16,6 +16,7 @@ program.command('release')
     .option('-m, --mandatory <bool>', 'make the release to be mandatory', parseBoolean, false)
     .option('--enable <bool>', 'make the release to be enabled', parseBoolean, true)
     .option('--skip-bundle <bool>', 'skip bundle process', parseBoolean, false)
+    .option('--skip-cleanup <bool>', 'skip cleanup process', parseBoolean, false)
     .option('--output-bundle-dir <string>', 'name of directory containing the bundle file created by the "bundle" command', OUTPUT_BUNDLE_DIR)
     /**
      * @param {Object} options
@@ -30,6 +31,7 @@ program.command('release')
      * @param {string} options.mandatory
      * @param {string} options.enable
      * @param {string} options.skipBundle
+     * @param {string} options.skipCleanup
      * @param {string} options.outputBundleDir
      * @return {void}
      */
@@ -50,6 +52,7 @@ program.command('release')
             options.mandatory,
             options.enable,
             options.skipBundle,
+            options.skipCleanup,
             `${options.outputPath}/${options.outputBundleDir}`,
         )
 

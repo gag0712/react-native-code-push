@@ -33,6 +33,7 @@ const { addToReleaseHistory } = require("./addToReleaseHistory");
  * @param mandatory {boolean}
  * @param enable {boolean}
  * @param skipBundle {boolean}
+ * @param skipCleanup {boolean}
  * @param bundleDirectory {string}
  * @return {Promise<void>}
  */
@@ -50,6 +51,7 @@ async function release(
     mandatory,
     enable,
     skipBundle,
+    skipCleanup,
     bundleDirectory,
 ) {
     const bundleFileName = skipBundle
@@ -80,7 +82,9 @@ async function release(
         enable,
     )
 
-    cleanUpOutputs(outputPath);
+    if (!skipCleanup) {
+        cleanUpOutputs(outputPath);
+    }
 }
 
 function cleanUpOutputs(dir) {
