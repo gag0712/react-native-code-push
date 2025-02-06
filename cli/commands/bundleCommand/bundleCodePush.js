@@ -4,6 +4,7 @@ const { runReactNativeBundleCommand } = require('../../functions/runReactNativeB
 const { getReactTempDir } = require('../../functions/getReactTempDir');
 const { runHermesEmitBinaryCommand } = require('../../functions/runHermesEmitBinaryCommand');
 const { makeCodePushBundle } = require('../../functions/makeCodePushBundle');
+const { ROOT_OUTPUT_DIR, ENTRY_FILE } = require('../../constant');
 
 /**
  * @param platform {string} 'ios' | 'android'
@@ -15,8 +16,8 @@ const { makeCodePushBundle } = require('../../functions/makeCodePushBundle');
  */
 async function bundleCodePush(
   platform = 'ios',
-  outputRootPath = 'build',
-  entryFile = 'index.ts',
+  outputRootPath = ROOT_OUTPUT_DIR,
+  entryFile = ENTRY_FILE,
   jsBundleName, // JS bundle file name (not CodePush bundle file)
   bundleDirectory, // CodePush bundle output directory
 ) {

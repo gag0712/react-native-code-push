@@ -21,7 +21,7 @@ function runReactNativeBundleCommand(
     outputPath,
     platform,
     sourcemapOutput,
-    entryFile = 'index.ts',
+    entryFile,
     extraBundlerOptions = [],
 ) {
     /**
