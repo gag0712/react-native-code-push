@@ -57,7 +57,14 @@ export interface CodePushOptions extends SyncOptions {
     /**
      * Specifies a function to get the release history.
      *
-     * (If you want to use `updateChecker`, pass no-op function.)
+     * If you want to use `updateChecker`, pass no-op function like below.
+     * But it is deprecated and will be removed in the next major version.
+     *
+     * ```ts
+     * const codePushOptions: {
+     *     releaseHistoryFetcher: async () => ({}), // This will not be called
+     * }
+     * ```
      */
     releaseHistoryFetcher: (updateRequest: UpdateCheckRequest) => Promise<ReleaseHistoryInterface>;
     /**

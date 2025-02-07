@@ -631,6 +631,10 @@ function codePushify(options = {}) {
     );
   }
 
+  if (options.updateChecker && !options.releaseHistoryFetcher) {
+    throw new Error('If you want to use `updateChecker`, pass a no-op function to releaseHistoryFetcher option. (e.g. `releaseHistoryFetcher: async () => ({})`)');
+  }
+
   sharedCodePushOptions.setReleaseHistoryFetcher(options.releaseHistoryFetcher);
   sharedCodePushOptions.setUpdateChecker(options.updateChecker);
 
