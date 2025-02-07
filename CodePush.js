@@ -61,84 +61,75 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
       };
 
       /**
-       * `releaseHistory`
-       * @type {ReleaseHistoryInterface}
+       * @type {updateChecker|undefined}
+       * @deprecated
        */
-      const releaseHistory = await sharedCodePushOptions.releaseHistoryFetcher(updateRequest);
+      const updateChecker = sharedCodePushOptions.updateChecker;
+      if (updateChecker) {
+        const { update_info } = await updateChecker(updateRequest);
 
-      /**
-       * `runtimeVersion`
-       * The version of currently running CodePush update. (It can be undefined if the app is running without CodePush update.)
-       * @type {string|undefined}
-       */
-      const runtimeVersion = updateRequest.label;
-
-      const versioning = new SemverVersioning(releaseHistory);
-
-      const shouldRollbackToBinary = versioning.shouldRollbackToBinary(runtimeVersion)
-      if (shouldRollbackToBinary) {
-        // Reset to latest major version and restart
-        CodePush.clearUpdates();
-        CodePush.allowRestart();
-        CodePush.restartApp();
-      }
-
-      const [latestVersion, latestReleaseInfo] = versioning.findLatestRelease();
-      const isMandatory = versioning.checkIsMandatory(runtimeVersion);
-
-      /**
-       * Convert the update information decided from `ReleaseHistoryInterface` to be passed to the library core (original CodePush library).
-       *
-       * @type {UpdateCheckResponse} the interface required by the original CodePush library.
-       */
-      const updateInfo = {
-        download_url: latestReleaseInfo.downloadUrl,
-        // (`enabled` will always be true in the release information obtained from the previous process.)
-        is_available: latestReleaseInfo.enabled,
-        package_hash: latestReleaseInfo.packageHash,
-        is_mandatory: isMandatory,
-        // 이건 항상 현재 실행중인 바이너리 버전을 전달한다.
-        // 조회한 업데이트가 현재 바이너리를 타겟하는가? 를 API 서버에서 판단한 다음, 해당 된다면 런타임 바이너리 버전을 그대로 돌려주던 것임.
-        // 우리는 updateChecker 조회 결과가 넘어왔다면 해당 정보는 현재 런타임 바이너리에 호환됨을 전제로 하고있음.
-        target_binary_range: updateRequest.app_version,
+        return mapToRemotePackageMetadata(update_info, config.deploymentKey);
+      } else {
         /**
-         * Retrieve the update version from the ReleaseHistory and store it in the label.
-         * This information can be accessed at runtime through the CodePush bundle metadata.
+         * `releaseHistory`
+         * @type {ReleaseHistoryInterface}
          */
-        label: latestVersion,
-        // false 전달해야 정상 동작함
-        update_app_version: false,
-        // 그닥 쓸모 없음
-        description: '',
-        // 런타임에 안쓰임
-        is_disabled: false,
-        // 런타임에 안쓰임
-        package_size: 0,
-        // 런타임에 안쓰임
-        should_run_binary_version: false,
+        const releaseHistory = await sharedCodePushOptions.releaseHistoryFetcher(updateRequest);
+
+        /**
+         * `runtimeVersion`
+         * The version of currently running CodePush update. (It can be undefined if the app is running without CodePush update.)
+         * @type {string|undefined}
+         */
+        const runtimeVersion = updateRequest.label;
+
+        const versioning = new SemverVersioning(releaseHistory);
+
+        const shouldRollbackToBinary = versioning.shouldRollbackToBinary(runtimeVersion)
+        if (shouldRollbackToBinary) {
+          // Reset to latest major version and restart
+          CodePush.clearUpdates();
+          CodePush.allowRestart();
+          CodePush.restartApp();
+        }
+
+        const [latestVersion, latestReleaseInfo] = versioning.findLatestRelease();
+        const isMandatory = versioning.checkIsMandatory(runtimeVersion);
+
+        /**
+         * Convert the update information decided from `ReleaseHistoryInterface` to be passed to the library core (original CodePush library).
+         *
+         * @type {UpdateCheckResponse} the interface required by the original CodePush library.
+         */
+        const updateInfo = {
+          download_url: latestReleaseInfo.downloadUrl,
+          // (`enabled` will always be true in the release information obtained from the previous process.)
+          is_available: latestReleaseInfo.enabled,
+          package_hash: latestReleaseInfo.packageHash,
+          is_mandatory: isMandatory,
+          // 이건 항상 현재 실행중인 바이너리 버전을 전달한다.
+          // 조회한 업데이트가 현재 바이너리를 타겟하는가? 를 API 서버에서 판단한 다음, 해당 된다면 런타임 바이너리 버전을 그대로 돌려주던 것임.
+          // 우리는 updateChecker 조회 결과가 넘어왔다면 해당 정보는 현재 런타임 바이너리에 호환됨을 전제로 하고있음.
+          target_binary_range: updateRequest.app_version,
+          /**
+           * Retrieve the update version from the ReleaseHistory and store it in the label.
+           * This information can be accessed at runtime through the CodePush bundle metadata.
+           */
+          label: latestVersion,
+          // false 전달해야 정상 동작함
+          update_app_version: false,
+          // 그닥 쓸모 없음
+          description: '',
+          // 런타임에 안쓰임
+          is_disabled: false,
+          // 런타임에 안쓰임
+          package_size: 0,
+          // 런타임에 안쓰임
+          should_run_binary_version: false,
+        }
+
+        return mapToRemotePackageMetadata(updateInfo, config.deploymentKey);
       }
-
-
-      if (!updateInfo) {
-        return null;
-      } else if (!updateInfo.download_url) {
-        log("download_url is missed in the release history.");
-        return null;
-      } else if (!updateInfo.is_available) {
-        return null;
-      }
-
-      // refer to `RemotePackage` type inside code-push SDK
-      return {
-        deploymentKey: config.deploymentKey,
-        description: updateInfo.description ?? '',
-        label: updateInfo.label ?? '',
-        appVersion: updateInfo.target_binary_range ?? '',
-        isMandatory: updateInfo.is_mandatory ?? false,
-        packageHash: updateInfo.package_hash ?? '',
-        packageSize: updateInfo.package_size ?? 0,
-        downloadUrl: updateInfo.download_url ?? '',
-      };
     } catch (error) {
       log(`An error has occurred at update checker :`, error);
       // update will not happen
@@ -181,6 +172,34 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
     remotePackage.deploymentKey = deploymentKey || nativeConfig.deploymentKey;
     return remotePackage;
   }
+}
+
+/**
+ * @param updateInfo {UpdateCheckResponse}
+ * @param deploymentKey {string}
+ * @return {RemotePackage | null}
+ */
+function mapToRemotePackageMetadata(updateInfo, deploymentKey) {
+  if (!updateInfo) {
+    return null;
+  } else if (!updateInfo.download_url) {
+    log("download_url is missed in the release history.");
+    return null;
+  } else if (!updateInfo.is_available) {
+    return null;
+  }
+
+  // refer to `RemotePackage` type inside code-push SDK
+  return {
+    deploymentKey: deploymentKey,
+    description: updateInfo.description ?? '',
+    label: updateInfo.label ?? '',
+    appVersion: updateInfo.target_binary_range ?? '',
+    isMandatory: updateInfo.is_mandatory ?? false,
+    packageHash: updateInfo.package_hash ?? '',
+    packageSize: updateInfo.package_size ?? 0,
+    downloadUrl: updateInfo.download_url ?? '',
+  };
 }
 
 const getConfiguration = (() => {
@@ -562,18 +581,34 @@ let CodePush;
  */
 
 /**
+ * @callback updateChecker
+ * @param {UpdateCheckRequest} updateRequest Current package information to check for updates.
+ * @returns {Promise<{update_info: UpdateCheckResponse}>} The result of the update check. Follows the AppCenter API response interface.
+ *
+ * @deprecated It will be removed in the next major version.
+ */
+
+/**
  * If you pass options once when calling `codePushify`, they will be shared with related functions.
  * @type {{
  *   releaseHistoryFetcher: releaseHistoryFetcher | undefined,
- *   setReleaseHistoryFetcher(releaseHistoryFetcherFunction: releaseHistoryFetcher): void,
+ *   setReleaseHistoryFetcher(releaseHistoryFetcherFunction: releaseHistoryFetcher | undefined): void,
+ *   updateChecker: updateChecker | undefined,
+ *   setUpdateChecker(updateCheckerFunction: updateChecker | undefined): void,
  * }}
  */
 const sharedCodePushOptions = {
   releaseHistoryFetcher: undefined,
   setReleaseHistoryFetcher(releaseHistoryFetcherFunction) {
-    if (!releaseHistoryFetcherFunction || typeof releaseHistoryFetcherFunction !== 'function') throw new Error('pass a function to releaseHistoryFetcher');
+    if (!releaseHistoryFetcherFunction || typeof releaseHistoryFetcherFunction !== 'function') throw new Error('Please implement the releaseHistoryFetcher function');
     this.releaseHistoryFetcher = releaseHistoryFetcherFunction;
-  }
+  },
+  updateChecker: undefined,
+  setUpdateChecker(updateCheckerFunction) {
+    if (!updateCheckerFunction) return;
+    if (typeof updateCheckerFunction !== 'function') throw new Error('Please pass a function to updateChecker');
+    this.updateChecker = updateCheckerFunction;
+  },
 }
 
 function codePushify(options = {}) {
@@ -597,6 +632,7 @@ function codePushify(options = {}) {
   }
 
   sharedCodePushOptions.setReleaseHistoryFetcher(options.releaseHistoryFetcher);
+  sharedCodePushOptions.setUpdateChecker(options.updateChecker);
 
   const decorator = (RootComponent) => {
     class CodePushComponent extends React.Component {

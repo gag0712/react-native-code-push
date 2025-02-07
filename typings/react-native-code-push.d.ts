@@ -56,8 +56,18 @@ export interface CodePushOptions extends SyncOptions {
     checkFrequency: CodePush.CheckFrequency;
     /**
      * Specifies a function to get the release history.
+     *
+     * (If you want to use `updateChecker`, pass no-op function.)
      */
     releaseHistoryFetcher: (updateRequest: UpdateCheckRequest) => Promise<ReleaseHistoryInterface>;
+    /**
+     * Specify a function to perform the update check.
+     * It can be used for self-hosting.
+     * Defaults to AppCenter update_check REST API request.
+     *
+     * @deprecated It will be removed in the next major version. Please migrate to `releaseHistoryFetcher`.
+     */
+    updateChecker?: (updateRequest: UpdateCheckRequest) => Promise<{ update_info: UpdateCheckResponse }>;
 }
 
 export interface DownloadProgress {
