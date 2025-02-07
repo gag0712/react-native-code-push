@@ -131,7 +131,8 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
         return mapToRemotePackageMetadata(updateInfo, config.deploymentKey);
       }
     } catch (error) {
-      log(`An error has occurred at update checker :`, error);
+      log(`An error has occurred at update checker :`);
+      console.error(error)
       // update will not happen
       return undefined;
     }
