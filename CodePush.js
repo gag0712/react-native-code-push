@@ -122,6 +122,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
       if (!updateInfo) {
         return null;
       } else if (!updateInfo.download_url) {
+        log("download_url is missed in the release history.");
         return null;
       } else if (!updateInfo.is_available) {
         return null;
