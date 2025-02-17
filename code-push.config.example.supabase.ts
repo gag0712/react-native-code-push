@@ -46,6 +46,7 @@ const Config: CliConfigInterface = {
             .upload(remotePath, fileStream, {
                 contentType: "application/zip",
                 duplex: "half",
+                upsert: true,
             });
 
         if (error) {
@@ -97,6 +98,7 @@ const Config: CliConfigInterface = {
             .upload(remoteJsonPath, Buffer.from(fileContent), {
                 contentType: "application/json",
                 cacheControl: "5",
+                upsert: true,
             });
 
         if (error) {
