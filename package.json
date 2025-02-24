@@ -47,6 +47,9 @@
     "shelljs": "^0.8.5",
     "yazl": "^3.3.1"
   },
+  "peerDependencies": {
+    "react-native": "*"
+  },
   "devDependencies": {
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
