@@ -14,3 +14,10 @@ export function getPlatform() {
 export function trackError(error: unknown) {
   console.error(error); // fake implementation
 }
+
+export function findKeyByValue(
+  object: Record<string, unknown>,
+  value: unknown,
+) {
+  return Object.keys(object).find(key => object[key] === value);
+}

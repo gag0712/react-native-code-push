@@ -5,16 +5,15 @@
  * @format
  */
 
-import React from "react";
-import type {PropsWithChildren} from "react";
+import React, {useState} from "react";
 import {
+  Appearance,
   Button,
   SafeAreaView,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
-  useColorScheme,
+  TextInput,
   View,
 } from "react-native";
 import CodePush, {
@@ -22,99 +21,109 @@ import CodePush, {
   UpdateCheckRequest,
 } from "@bravemobile/react-native-code-push";
 import axios from "axios";
-import {getPlatform, trackError} from "./utils";
+import {findKeyByValue, getPlatform, trackError} from "./utils";
 
 import {Colors, Header} from "react-native/Libraries/NewAppScreen";
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === "dark";
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+Appearance.setColorScheme("light");
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === "dark";
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  const [syncResult, setSyncResult] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [runningMetadata, setRunningMetadata] = useState("");
+  const [pendingMetadata, setPendingMetadata] = useState("");
+  const [latestMetadata, setLatestMetadata] = useState("");
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? "light-content" : "dark-content"}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            <Button
-              title={"Check for updates"}
-              onPress={async () => {
-                const result = await CodePush.sync();
-                const status = Object.entries(CodePush.SyncStatus).find(
-                  ([key, value]) => value === result,
-                );
-                console.log("SyncStatus", status?.at(0));
-              }}
-            />
-          </Section>
+    <SafeAreaView style={{flex: 1, backgroundColor: Colors.white}}>
+      <StatusBar barStyle={"dark-content"} />
+      <SmallHeader />
+      <ScrollView contentContainerStyle={{padding: 16}}>
+        <View style={{gap: 8}}>
+          <Button
+            title={"Check for updates"}
+            onPress={() => {
+              CodePush.sync(
+                {
+                  updateDialog: true,
+                },
+                status => {
+                  const statusKey = findKeyByValue(CodePush.SyncStatus, status);
+                  setSyncResult(statusKey ?? "");
+                },
+                ({receivedBytes, totalBytes}) => {
+                  setProgress(Math.round((receivedBytes / totalBytes) * 100));
+                },
+              );
+            }}
+          />
+          <Text>{`Check result: ${syncResult}`}</Text>
+          <Text>{`Download progress: ${
+            progress > 0 ? progress + "%" : ""
+          }`}</Text>
+        </View>
+
+        <View style={{gap: 8, marginTop: 16}}>
+          <Button
+            title={"Clear updates"}
+            onPress={() => {
+              CodePush.clearUpdates();
+              setSyncResult("");
+              setProgress(0);
+            }}
+          />
+          <Button
+            title={"Restart app"}
+            onPress={() => {
+              CodePush.restartApp();
+            }}
+          />
+
+          <Button
+            title={"Get update metadata"}
+            onPress={async () => {
+              const [running, pending, latest] = await Promise.all([
+                CodePush.getUpdateMetadata(CodePush.UpdateState.RUNNING),
+                CodePush.getUpdateMetadata(CodePush.UpdateState.PENDING),
+                CodePush.getUpdateMetadata(CodePush.UpdateState.LATEST),
+              ]);
+              setRunningMetadata(JSON.stringify(running, null, 2));
+              setPendingMetadata(JSON.stringify(pending, null, 2));
+              setLatestMetadata(JSON.stringify(latest, null, 2));
+            }}
+          />
+          <Text>Running:</Text>
+          <GetMetadataResult value={`${runningMetadata}`} />
+          <Text>Pending:</Text>
+          <GetMetadataResult value={`${pendingMetadata}`} />
+          <Text>Latest:</Text>
+          <GetMetadataResult value={`${latestMetadata}`} />
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: "600",
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: "400",
-  },
-  highlight: {
-    fontWeight: "700",
-  },
-});
+function SmallHeader() {
+  return (
+    <View style={{height: 80, justifyContent: "flex-end", overflow: "hidden"}}>
+      <Header />
+    </View>
+  );
+}
 
-const CDN_HOST = "https://your.cdn.provider.com";
+function GetMetadataResult({value}: {value: string}) {
+  return (
+    <TextInput
+      value={value}
+      style={{borderWidth: 1, padding: 4, maxHeight: 200, color: Colors.black}}
+      editable={false}
+      multiline
+    />
+  );
+}
+
+const CODEPUSH_HOST = "https://your.cdn.provider.com";
 
 async function releaseHistoryFetcher(
   updateRequest: UpdateCheckRequest,
@@ -123,7 +132,7 @@ async function releaseHistoryFetcher(
   const jsonFileName = `${updateRequest.app_version}.json`;
   try {
     // ❗️ URL of release history JSON file uploaded using `npx code-push` command. (code-push.config.ts)
-    const releaseHistoryUrl = `${CDN_HOST}/histories/${getPlatform()}/${identifier}/${jsonFileName}`;
+    const releaseHistoryUrl = `${CODEPUSH_HOST}/histories/${getPlatform()}/${identifier}/${jsonFileName}`;
 
     const {data: releaseHistory} = await axios.get<ReleaseHistoryInterface>(
       releaseHistoryUrl,
