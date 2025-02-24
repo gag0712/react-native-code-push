@@ -99,26 +99,29 @@ async function checkForUpdate(handleBinaryVersionMismatchCallback = null) {
           is_available: latestReleaseInfo.enabled,
           package_hash: latestReleaseInfo.packageHash,
           is_mandatory: isMandatory,
-          // 이건 항상 현재 실행중인 바이너리 버전을 전달한다.
-          // 조회한 업데이트가 현재 바이너리를 타겟하는가? 를 API 서버에서 판단한 다음, 해당 된다면 런타임 바이너리 버전을 그대로 돌려주던 것임.
-          // 우리는 updateChecker 조회 결과가 넘어왔다면 해당 정보는 현재 런타임 바이너리에 호환됨을 전제로 하고있음.
+          /**
+           * The `ReleaseHistoryInterface` data returned by the `releaseHistoryFetcher` function is
+           * based on the assumption that it is compatible with the current runtime binary.
+           * (because it is querying the update history deployed for the current binary version)
+           * Therefore, the current runtime binary version should be passed as it is.
+           */
           target_binary_range: updateRequest.app_version,
           /**
            * Retrieve the update version from the ReleaseHistory and store it in the label.
            * This information can be accessed at runtime through the CodePush bundle metadata.
            */
           label: latestVersion,
-          // false 전달해야 정상 동작함
+          // `false` should be passed to work properly
           update_app_version: false,
-          // 그닥 쓸모 없음
-          description: '',
-          // 런타임에 안쓰임
+          // currently not used.
+          description: "",
+          // not used at runtime.
           is_disabled: false,
-          // 런타임에 안쓰임
+          // not used at runtime.
           package_size: 0,
-          // 런타임에 안쓰임
+          // not used at runtime.
           should_run_binary_version: false,
-        }
+        };
 
         return mapToRemotePackageMetadata(updateInfo);
       }
