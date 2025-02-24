@@ -213,7 +213,7 @@ export default CodePush({
 > [!TIP]
 > For a more detailed and practical example, refer to the `CodePushDemoApp` in `example` directory.
 
-(1) Create a `code-push.config.ts` file in the root directory of your project.
+**(1) Create a `code-push.config.ts` file in the root directory of your project.**
 
 Then, implement three functions to upload the bundle file and create/update the release history.
 The CLI tool uses these functions to release CodePush updates and manage releases.
@@ -233,10 +233,7 @@ const Config: CliConfigInterface = {
     platform: "ios" | "android",
     identifier,
   ): Promise<{downloadUrl: string}> => {
-    // Implements a function to upload the bundle file.
-    // The `downloadUrl` returned by this function is recorded in `ReleaseHistoryInterface` data
-    // and used by the library runtime to download the bundle file from this URL.
-    return {downloadUrl: "https://your.cdn.com/bundles/path/to/codepush-bundle"};
+    // ...
   },
 
   getReleaseHistory: async (
@@ -244,11 +241,7 @@ const Config: CliConfigInterface = {
     platform: "ios" | "android",
     identifier,
   ): Promise<ReleaseHistoryInterface> => {
-    // Retrieves the release history of a specific binary app by fetching a JSON file or calling an API.
-    // It's used for printing release history with the `show-history` command,
-    // loading existing release history during the `release` command,
-    // or fetching release history to modify information in the `update-history` command.
-    // (Similar to the `releaseHistoryFetcher` function in the library runtime options.)
+    // ...
   },
 
   setReleaseHistory: async (
@@ -258,12 +251,7 @@ const Config: CliConfigInterface = {
     platform: "ios" | "android",
     identifier,
   ): Promise<void> => {
-    // upload JSON file located at `jsonFilePath` or call API using `releaseInfo` metadata.
-    // If using a JSON file, modifying the existing file should be allowed.
-    // (Overwriting the file is recommended.)
-    // It's used for creating a new release record for new binary build with the `create-history` command,
-    // appending a new record to an existing release history with the `release` command,
-    // or modifying an exsisting release history with the `update-history` command.
+    // ...
   },
 };
 
@@ -271,7 +259,35 @@ module.exports = Config;
 
 ```
 
-(2) For `code-push.config.ts` (TypeScript) to work properly, you may need to update your `tsconfig.json`.
+**`bundleUploader`**
+- Implements a function to upload the bundle file.
+- The `downloadUrl` returned by this function is recorded in `ReleaseHistoryInterface` data
+  and is used by the library runtime to download the bundle file from this URL.
+- Used in the following cases:
+  - Creating a new CodePush update with the `release` command.
+
+
+**`getReleaseHistory`**
+- Retrieves the release history of a specific binary app by fetching a JSON file or calling an API.
+- Used in the following cases:
+  - Printing the release history with the `show-history` command.
+  - Loading existing release history during the `release` command.
+  - Fetching release history to modify information in the `update-history` command.
+
+(Similar to the `releaseHistoryFetcher` function in the library runtime options.)
+
+
+**`setReleaseHistory`**
+- Uploads a JSON file located at `jsonFilePath` or calls an API using `releaseInfo` metadata.
+- If using a JSON file, **modifying the existing file should be allowed.**
+  (Overwriting the file is recommended.)
+- Used in the following cases:
+  - Creating a new release record for a new binary build with the `create-history` command.
+  - Appending a new record to an existing release history with the `release` command.
+  - Modifying an existing release history with the `update-history` command.
+
+
+**(2) For `code-push.config.ts` (TypeScript) to work properly, you may need to update your `tsconfig.json`.**
 
 ```diff
   {
