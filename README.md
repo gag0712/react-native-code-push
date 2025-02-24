@@ -211,7 +211,7 @@ export default CodePush({
 ### 5. Configure the CLI Tool
 
 > [!TIP]
-> For a more detailed and practical example, refer to the `CodePushDemoApp` in `example` directory.
+> For a more detailed and practical example, refer to the `CodePushDemoApp` in `example` directory. ([link](https://github.com/Soomgo-Mobile/react-native-code-push/tree/master/Examples/CodePushDemoApp))
 
 **(1) Create a `code-push.config.ts` file in the root directory of your project.**
 
