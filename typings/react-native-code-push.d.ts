@@ -2,12 +2,10 @@ export type DownloadProgressCallback = (progress: DownloadProgress) => void;
 export type SyncStatusChangedCallback = (status: CodePush.SyncStatus) => void;
 export type HandleBinaryVersionMismatchCallback = (update: RemotePackage) => void;
 
-// from code-push SDK
 export interface UpdateCheckRequest {
     /** The native version, not in package.json. */
     app_version: string;
     client_unique_id?: string;
-    deployment_key: string;
     is_companion?: boolean;
     label?: string;
     package_hash?: string;
@@ -313,13 +311,6 @@ export interface StatusReport {
  * @param options Options used to configure the end-user sync and update experience (e.g. when to check for updates?, show an prompt?, install the update immediately?).
  */
 declare function CodePush(options?: CodePushOptions): (x: any) => any;
-
-/**
- * Decorates a React Component configuring it to sync for updates with the CodePush server.
- *
- * @param x the React Component that will decorated
- */
-declare function CodePush(x: any): any;
 
 declare namespace CodePush {
     /**
