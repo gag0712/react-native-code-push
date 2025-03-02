@@ -9,7 +9,9 @@ import android.provider.Settings;
 import android.view.View;
 
 import com.facebook.react.ReactApplication;
+import com.facebook.react.ReactDelegate;
 import com.facebook.react.ReactInstanceManager;
+import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactRootView;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.JSBundleLoader;
@@ -156,12 +158,21 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                 @Override
                 public void run() {
                     try {
-                        // We don't need to resetReactRootViews anymore 
-                        // due the issue https://github.com/facebook/react-native/issues/14533
-                        // has been fixed in RN 0.46.0
-                        //resetReactRootViews(instanceManager);
+                        var reactDelegate = getReactDelegate();
+                        if (reactDelegate == null) {
+                            return;
+                        }
 
-                        instanceManager.recreateReactContextInBackground();
+                        // reload method introduced in RN 0.74 (https://github.com/reactwg/react-native-new-architecture/discussions/174)
+                        // so, we need to check if reload method exists and call it
+                        try {
+                            var reloadMethod = reactDelegate.getClass().getMethod("reload");
+                            reloadMethod.invoke(reactDelegate);
+                        } catch (NoSuchMethodException e) {
+                            // TODO: need test (RN < 0.74)
+                            instanceManager.recreateReactContextInBackground();
+                        }
+
                         mCodePush.initializeUpdateAfterRestart();
                     } catch (Exception e) {
                         // The recreation method threw an unknown exception
@@ -199,6 +210,14 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             getReactApplicationContext().removeLifecycleEventListener(mLifecycleEventListener);
             mLifecycleEventListener = null;
         }
+    }
+
+    private ReactDelegate getReactDelegate() {
+        ReactActivity currentActivity = (ReactActivity) getCurrentActivity();
+        if (currentActivity == null) {
+            return null;
+        }
+        return currentActivity.getReactDelegate();
     }
 
     // Use reflection to find the ReactInstanceManager. See #556 for a proposal for a less brittle way to approach this.
