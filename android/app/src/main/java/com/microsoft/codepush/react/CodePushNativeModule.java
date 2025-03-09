@@ -32,6 +32,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -158,21 +159,19 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                 @Override
                 public void run() {
                     try {
-                        var reactDelegate = getReactDelegate();
-                        if (reactDelegate == null) {
-                            return;
-                        }
-
                         // reload method introduced in RN 0.74 (https://github.com/reactwg/react-native-new-architecture/discussions/174)
                         // so, we need to check if reload method exists and call it
                         try {
-                            var reloadMethod = reactDelegate.getClass().getMethod("reload");
+                            ReactDelegate reactDelegate = CodePushNativeModule.this.getReactDelegate();
+                            if (reactDelegate == null) {
+                                throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
+                            }
+                            Method reloadMethod = reactDelegate.getClass().getMethod("reload");
                             reloadMethod.invoke(reactDelegate);
                         } catch (NoSuchMethodException e) {
-                            // TODO: need test (RN < 0.74)
+                            // RN < 0.74 calls ReactInstanceManager.recreateReactContextInBackground() directly
                             instanceManager.recreateReactContextInBackground();
                         }
-
                         mCodePush.initializeUpdateAfterRestart();
                     } catch (Exception e) {
                         // The recreation method threw an unknown exception
@@ -217,7 +216,14 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
         if (currentActivity == null) {
             return null;
         }
-        return currentActivity.getReactDelegate();
+
+        try {
+            Method getReactDelegateMethod = currentActivity.getClass().getMethod("getReactDelegate");
+            return (ReactDelegate) getReactDelegateMethod.invoke(currentActivity);
+        } catch (Exception e) {
+            // RN < 0.74 doesn't have getReactDelegate method
+            return null;
+        }
     }
 
     // Use reflection to find the ReactInstanceManager. See #556 for a proposal for a less brittle way to approach this.
