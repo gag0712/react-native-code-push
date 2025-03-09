@@ -162,7 +162,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                         // reload method introduced in RN 0.74 (https://github.com/reactwg/react-native-new-architecture/discussions/174)
                         // so, we need to check if reload method exists and call it
                         try {
-                            ReactDelegate reactDelegate = CodePushNativeModule.this.getReactDelegate();
+                            ReactDelegate reactDelegate = CodePushNativeModule.this.resolveReactDelegate();
                             if (reactDelegate == null) {
                                 throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
                             }
@@ -211,7 +211,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
         }
     }
 
-    private ReactDelegate getReactDelegate() {
+    private ReactDelegate resolveReactDelegate() {
         ReactActivity currentActivity = (ReactActivity) getCurrentActivity();
         if (currentActivity == null) {
             return null;
@@ -517,7 +517,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                             return null;
                         }
                     }
-                    
+
                     promise.resolve("");
                 } catch(CodePushUnknownException e) {
                     CodePushUtils.log(e);
