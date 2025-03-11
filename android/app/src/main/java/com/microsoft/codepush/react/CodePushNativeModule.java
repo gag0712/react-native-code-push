@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Settings;
 import android.view.View;
 
 import com.facebook.react.ReactApplication;
@@ -22,6 +21,7 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.devsupport.interfaces.DevSupportManager;
 import com.facebook.react.modules.core.ChoreographerCompat;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.core.ReactChoreographer;
@@ -36,7 +36,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -166,6 +165,9 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                             if (reactDelegate == null) {
                                 throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
                             }
+
+                            resetReactRootViewsIfDebug(instanceManager, reactDelegate);
+
                             Method reloadMethod = reactDelegate.getClass().getMethod("reload");
                             reloadMethod.invoke(reactDelegate);
                         } catch (NoSuchMethodException e) {
@@ -189,18 +191,22 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
         }
     }
 
-    // This workaround has been implemented in order to fix https://github.com/facebook/react-native/issues/14533
-    // resetReactRootViews allows to call recreateReactContextInBackground without any exceptions
-    // This fix also relates to https://github.com/microsoft/react-native-code-push/issues/878
-    private void resetReactRootViews(ReactInstanceManager instanceManager) throws NoSuchFieldException, IllegalAccessException {
-        Field mAttachedRootViewsField = instanceManager.getClass().getDeclaredField("mAttachedRootViews");
-        mAttachedRootViewsField.setAccessible(true);
-        List<ReactRootView> mAttachedRootViews = (List<ReactRootView>)mAttachedRootViewsField.get(instanceManager);
-        for (ReactRootView reactRootView : mAttachedRootViews) {
-            reactRootView.removeAllViews();
-            reactRootView.setId(View.NO_ID);
+    // Fix freezing that occurs when reloading the app in debug mode (RN >= 0.77.1 Old Architecture)
+    //  - "Trying to add a root view with an explicit id (11) already set.
+    //     React Native uses the id field to track react tags and will overwrite this field.
+    //     If that is fine, explicitly overwrite the id field to View.NO_ID before calling addRootView."
+    private void resetReactRootViewsIfDebug(ReactInstanceManager instanceManager, ReactDelegate reactDelegate) {
+        DevSupportManager devSupportManager = instanceManager.getDevSupportManager();
+        if (devSupportManager.getDevSupportEnabled()) {
+            ReactActivity currentActivity = (ReactActivity) getCurrentActivity();
+            if (currentActivity != null) {
+                ReactRootView reactRootView = reactDelegate.getReactRootView();
+                if (reactRootView != null) {
+                    reactRootView.removeAllViews();
+                    reactRootView.setId(View.NO_ID);
+                }
+            }
         }
-        mAttachedRootViewsField.set(instanceManager, mAttachedRootViews);
     }
 
     private void clearLifecycleEventListener() {
