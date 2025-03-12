@@ -166,7 +166,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                                 throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
                             }
 
-                            resetReactRootViewsIfDebug(instanceManager, reactDelegate);
+                            resetReactRootViews(reactDelegate);
 
                             Method reloadMethod = reactDelegate.getClass().getMethod("reload");
                             reloadMethod.invoke(reactDelegate);
@@ -191,20 +191,17 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
         }
     }
 
-    // Fix freezing that occurs when reloading the app in debug mode (RN >= 0.77.1 Old Architecture)
+    // Fix freezing that occurs when reloading the app (RN >= 0.77.1 Old Architecture)
     //  - "Trying to add a root view with an explicit id (11) already set.
     //     React Native uses the id field to track react tags and will overwrite this field.
     //     If that is fine, explicitly overwrite the id field to View.NO_ID before calling addRootView."
-    private void resetReactRootViewsIfDebug(ReactInstanceManager instanceManager, ReactDelegate reactDelegate) {
-        DevSupportManager devSupportManager = instanceManager.getDevSupportManager();
-        if (devSupportManager.getDevSupportEnabled()) {
-            ReactActivity currentActivity = (ReactActivity) getCurrentActivity();
-            if (currentActivity != null) {
-                ReactRootView reactRootView = reactDelegate.getReactRootView();
-                if (reactRootView != null) {
-                    reactRootView.removeAllViews();
-                    reactRootView.setId(View.NO_ID);
-                }
+    private void resetReactRootViews(ReactDelegate reactDelegate) {
+        ReactActivity currentActivity = (ReactActivity) getCurrentActivity();
+        if (currentActivity != null) {
+            ReactRootView reactRootView = reactDelegate.getReactRootView();
+            if (reactRootView != null) {
+                reactRootView.removeAllViews();
+                reactRootView.setId(View.NO_ID);
             }
         }
     }
