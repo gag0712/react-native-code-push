@@ -7,8 +7,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 
+import androidx.annotation.OptIn;
+
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactDelegate;
+import com.facebook.react.ReactHost;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactRootView;
@@ -21,10 +24,11 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.devsupport.interfaces.DevSupportManager;
+import com.facebook.react.common.annotations.UnstableReactNativeAPI;
 import com.facebook.react.modules.core.ChoreographerCompat;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.core.ReactChoreographer;
+import com.facebook.react.runtime.ReactHostDelegate;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -122,13 +126,36 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                 latestJSBundleLoader = JSBundleLoader.createFileLoader(latestJSBundleFile);
             }
 
-            Field bundleLoaderField = instanceManager.getClass().getDeclaredField("mBundleLoader");
-            bundleLoaderField.setAccessible(true);
-            bundleLoaderField.set(instanceManager, latestJSBundleLoader);
+            ReactHost reactHost = resolveReactHost();
+            if (reactHost == null) {
+                // Bridge, Old Architecture and RN < 0.74 (we support Bridgeless >= 0.74)
+                setJSBundleLoaderBridge(instanceManager, latestJSBundleLoader);
+                return;
+            }
+
+            // Bridgeless (RN >= 0.74)
+            setJSBundleLoaderBridgeless(reactHost, latestJSBundleLoader);
         } catch (Exception e) {
             CodePushUtils.log("Unable to set JSBundle - CodePush may not support this version of React Native");
             throw new IllegalAccessException("Could not setJSBundle");
         }
+    }
+
+    private void setJSBundleLoaderBridge(ReactInstanceManager instanceManager, JSBundleLoader latestJSBundleLoader) throws NoSuchFieldException, IllegalAccessException {
+        Field bundleLoaderField = instanceManager.getClass().getDeclaredField("mBundleLoader");
+        bundleLoaderField.setAccessible(true);
+        bundleLoaderField.set(instanceManager, latestJSBundleLoader);
+    }
+
+    @OptIn(markerClass = UnstableReactNativeAPI.class)
+    private void setJSBundleLoaderBridgeless(ReactHost reactHost, JSBundleLoader latestJSBundleLoader) throws NoSuchFieldException, IllegalAccessException {
+        Field mReactHostDelegateField = reactHost.getClass().getDeclaredField("mReactHostDelegate");
+        mReactHostDelegateField.setAccessible(true);
+        ReactHostDelegate reactHostDelegate = (ReactHostDelegate) mReactHostDelegateField.get(reactHost);
+        assert reactHostDelegate != null;
+        Field jsBundleLoaderField = reactHostDelegate.getClass().getDeclaredField("jsBundleLoader");
+        jsBundleLoaderField.setAccessible(true);
+        jsBundleLoaderField.set(reactHostDelegate, latestJSBundleLoader);
     }
 
     private void loadBundle() {
@@ -161,7 +188,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                         // reload method introduced in RN 0.74 (https://github.com/reactwg/react-native-new-architecture/discussions/174)
                         // so, we need to check if reload method exists and call it
                         try {
-                            ReactDelegate reactDelegate = CodePushNativeModule.this.resolveReactDelegate();
+                            ReactDelegate reactDelegate = resolveReactDelegate();
                             if (reactDelegate == null) {
                                 throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
                             }
@@ -225,6 +252,21 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             return (ReactDelegate) getReactDelegateMethod.invoke(currentActivity);
         } catch (Exception e) {
             // RN < 0.74 doesn't have getReactDelegate method
+            return null;
+        }
+    }
+
+    private ReactHost resolveReactHost() {
+        ReactDelegate reactDelegate = resolveReactDelegate();
+        if (reactDelegate == null) {
+            return null;
+        }
+
+        try {
+            Field reactHostField = reactDelegate.getClass().getDeclaredField("mReactHost");
+            reactHostField.setAccessible(true);
+            return (ReactHost) reactHostField.get(reactDelegate);
+        } catch (Exception e) {
             return null;
         }
     }
