@@ -1,18 +1,15 @@
 # @bravemobile/react-native-code-push
 
-**Seamless transition from AppCenter to a fully self-hosted CodePush.**
+### Seamless Transition from AppCenter to a Fully Self-Hosted CodePush
 
-
-This package was created to continue using React Native CodePush without AppCenter.
-
-It allows self-hosting of CodePush deployments while retaining essential operational features.
-
-
-
+- **No API Server Needed** – Use static hosting solutions (e.g., AWS S3) without maintaining additional API servers.
+- **Familiar API** – Built on `microsoft/react-native-code-push`, ensuring compatibility and stability.
+- **Flexible Deployment** – Implement your own release workflow, giving you complete control over the deployment process.
 
 > [!NOTE]
-> New architecture will be supported later.
-
+> **New Architecture support is now available in beta!**
+>
+> `npm install @bravemobile/react-native-code-push@beta`
 
 
 ## 🚗 Migration Guide
