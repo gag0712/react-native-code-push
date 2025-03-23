@@ -73,6 +73,14 @@ export interface CodePushOptions extends SyncOptions {
      * @deprecated It will be removed in the next major version. Please migrate to `releaseHistoryFetcher`.
      */
     updateChecker?: (updateRequest: UpdateCheckRequest) => Promise<{ update_info: UpdateCheckResponse }>;
+    /**
+     * Callback function that is called when the update installation succeeds.
+     */
+    onUpdateSuccess?: (label: string) => void;
+    /**
+     * Callback function that is called when the update rolled back.
+     */
+    onUpdateRollback?: (label: string) => void;
 }
 
 export interface DownloadProgress {
