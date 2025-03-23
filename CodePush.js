@@ -253,9 +253,11 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
       const label = statusReport.package.label;
       if (statusReport.status === "DeploymentSucceeded") {
         log(`Reporting CodePush update success (${label})`);
+        sharedCodePushOptions?.onUpdateSuccess(label);
       } else {
         log(`Reporting CodePush update rollback (${label})`);
         await NativeCodePush.setLatestRollbackInfo(statusReport.package.packageHash);
+        sharedCodePushOptions?.onUpdateRollback(label);
       }
     }
 
@@ -584,6 +586,10 @@ let CodePush;
  *   setReleaseHistoryFetcher(releaseHistoryFetcherFunction: releaseHistoryFetcher | undefined): void,
  *   updateChecker: updateChecker | undefined,
  *   setUpdateChecker(updateCheckerFunction: updateChecker | undefined): void,
+ *   onUpdateSuccess: (label: string) => void | undefined,
+ *   setOnUpdateSuccess(onUpdateSuccessFunction: (label: string) => void | undefined): void,
+ *   onUpdateRollback: (label: string) => void | undefined,
+ *   setOnUpdateRollback(onUpdateRollbackFunction: (label: string) => void | undefined): void,
  * }}
  */
 const sharedCodePushOptions = {
@@ -597,6 +603,18 @@ const sharedCodePushOptions = {
     if (!updateCheckerFunction) return;
     if (typeof updateCheckerFunction !== 'function') throw new Error('Please pass a function to updateChecker');
     this.updateChecker = updateCheckerFunction;
+  },
+  onUpdateSuccess: undefined,
+  setOnUpdateSuccess(onUpdateSuccessFunction) {
+    if (!onUpdateSuccessFunction) return;
+    if (typeof onUpdateSuccessFunction !== 'function') throw new Error('Please pass a function to onUpdateSuccess');
+    this.onUpdateSuccess = onUpdateSuccessFunction;
+  },
+  onUpdateRollback: undefined,
+  setOnUpdateRollback(onUpdateRollbackFunction) {
+    if (!onUpdateRollbackFunction) return;
+    if (typeof onUpdateRollbackFunction !== 'function') throw new Error('Please pass a function to onUpdateRollback');
+    this.onUpdateRollback = onUpdateRollbackFunction;
   },
 }
 
@@ -626,6 +644,10 @@ function codePushify(options = {}) {
 
   sharedCodePushOptions.setReleaseHistoryFetcher(options.releaseHistoryFetcher);
   sharedCodePushOptions.setUpdateChecker(options.updateChecker);
+
+  // set telemetry callbacks
+  sharedCodePushOptions.setOnUpdateSuccess(options.onUpdateSuccess);
+  sharedCodePushOptions.setOnUpdateRollback(options.onUpdateRollback);
 
   const decorator = (RootComponent) => {
     class CodePushComponent extends React.Component {
