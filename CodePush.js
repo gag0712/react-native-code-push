@@ -466,15 +466,21 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
         }
       };
 
+  let remotePackageLabel;
   try {
     await CodePush.notifyApplicationReady();
 
     syncStatusChangeCallback(CodePush.SyncStatus.CHECKING_FOR_UPDATE);
     const remotePackage = await checkForUpdate(handleBinaryVersionMismatchCallback);
+    remotePackageLabel = remotePackage.label;
 
     const doDownloadAndInstall = async () => {
       syncStatusChangeCallback(CodePush.SyncStatus.DOWNLOADING_PACKAGE);
+      sharedCodePushOptions.onDownloadStart?.(remotePackageLabel);
+
       const localPackage = await remotePackage.download(downloadProgressCallback);
+
+      sharedCodePushOptions.onDownloadSuccess?.(remotePackageLabel);
 
       // Determine the correct install mode based on whether the update is mandatory or not.
       resolvedInstallMode = localPackage.isMandatory ? syncOptions.mandatoryInstallMode : syncOptions.installMode;
@@ -558,6 +564,7 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
     }
   } catch (error) {
     syncStatusChangeCallback(CodePush.SyncStatus.UNKNOWN_ERROR);
+    sharedCodePushOptions?.onSyncError(remotePackageLabel ?? 'unknown', error);
     log(error.message);
     throw error;
   }
@@ -584,12 +591,24 @@ let CodePush;
  * @type {{
  *   releaseHistoryFetcher: releaseHistoryFetcher | undefined,
  *   setReleaseHistoryFetcher(releaseHistoryFetcherFunction: releaseHistoryFetcher | undefined): void,
+ *
  *   updateChecker: updateChecker | undefined,
  *   setUpdateChecker(updateCheckerFunction: updateChecker | undefined): void,
+ *
  *   onUpdateSuccess: (label: string) => void | undefined,
  *   setOnUpdateSuccess(onUpdateSuccessFunction: (label: string) => void | undefined): void,
+ *
  *   onUpdateRollback: (label: string) => void | undefined,
  *   setOnUpdateRollback(onUpdateRollbackFunction: (label: string) => void | undefined): void,
+ *
+ *   onDownloadStart: (label: string) => void | undefined,
+ *   setOnDownloadStart(onDownloadStartFunction: (label: string) => void | undefined): void,
+ *
+ *   onDownloadSuccess: (label: string) => void | undefined,
+ *   setOnDownloadSuccess(onDownloadSuccessFunction: (label: string) => void | undefined): void,
+ *
+ *   onSyncError: (label: string, error: Error) => void | undefined,
+ *   setOnSyncError(onSyncErrorFunction: (label: string, error: Error) => void | undefined): void,
  * }}
  */
 const sharedCodePushOptions = {
@@ -615,6 +634,24 @@ const sharedCodePushOptions = {
     if (!onUpdateRollbackFunction) return;
     if (typeof onUpdateRollbackFunction !== 'function') throw new Error('Please pass a function to onUpdateRollback');
     this.onUpdateRollback = onUpdateRollbackFunction;
+  },
+  onDownloadStart: undefined,
+  setOnDownloadStart(onDownloadStartFunction) {
+    if (!onDownloadStartFunction) return;
+    if (typeof onDownloadStartFunction !== 'function') throw new Error('Please pass a function to onDownloadStart');
+    this.onDownloadStart = onDownloadStartFunction;
+  },
+  onDownloadSuccess: undefined,
+  setOnDownloadSuccess(onDownloadSuccessFunction) {
+    if (!onDownloadSuccessFunction) return;
+    if (typeof onDownloadSuccessFunction !== 'function') throw new Error('Please pass a function to onDownloadSuccess');
+    this.onDownloadSuccess = onDownloadSuccessFunction;
+  },
+  onSyncError: undefined,
+  setOnSyncError(onSyncErrorFunction) {
+    if (!onSyncErrorFunction) return;
+    if (typeof onSyncErrorFunction !== 'function') throw new Error('Please pass a function to onSyncError');
+    this.onSyncError = onSyncErrorFunction;
   },
 }
 
@@ -648,6 +685,9 @@ function codePushify(options = {}) {
   // set telemetry callbacks
   sharedCodePushOptions.setOnUpdateSuccess(options.onUpdateSuccess);
   sharedCodePushOptions.setOnUpdateRollback(options.onUpdateRollback);
+  sharedCodePushOptions.setOnDownloadStart(options.onDownloadStart);
+  sharedCodePushOptions.setOnDownloadSuccess(options.onDownloadSuccess);
+  sharedCodePushOptions.setOnSyncError(options.onSyncError);
 
   const decorator = (RootComponent) => {
     class CodePushComponent extends React.Component {
