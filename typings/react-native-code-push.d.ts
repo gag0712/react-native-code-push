@@ -81,6 +81,18 @@ export interface CodePushOptions extends SyncOptions {
      * Callback function that is called when the update rolled back.
      */
     onUpdateRollback?: (label: string) => void;
+    /**
+     * Callback function that is called when download starts.
+     */
+    onDownloadStart?: (label: string) => void;
+    /**
+     * Callback function that is called when download finished successfully.
+     */
+    onDownloadSuccess?: (label: string) => void;
+    /**
+     * Callback function that is called when sync process failed.
+     */
+    onSyncError?: (label: string, error: Error) => void;
 }
 
 export interface DownloadProgress {
