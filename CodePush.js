@@ -472,7 +472,7 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
 
     syncStatusChangeCallback(CodePush.SyncStatus.CHECKING_FOR_UPDATE);
     const remotePackage = await checkForUpdate(handleBinaryVersionMismatchCallback);
-    remotePackageLabel = remotePackage.label;
+    remotePackageLabel = remotePackage?.label;
 
     const doDownloadAndInstall = async () => {
       syncStatusChangeCallback(CodePush.SyncStatus.DOWNLOADING_PACKAGE);
