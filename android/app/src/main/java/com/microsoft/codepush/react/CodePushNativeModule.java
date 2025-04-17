@@ -1,6 +1,8 @@
 package com.microsoft.codepush.react;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -25,10 +27,13 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.annotations.UnstableReactNativeAPI;
+import com.facebook.react.devsupport.interfaces.DevSupportManager;
 import com.facebook.react.modules.core.ChoreographerCompat;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.core.ReactChoreographer;
+import com.facebook.react.modules.debug.interfaces.DeveloperSettings;
 import com.facebook.react.runtime.ReactHostDelegate;
+import com.facebook.react.runtime.ReactHostImpl;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -158,64 +163,90 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
         jsBundleLoaderField.set(reactHostDelegate, latestJSBundleLoader);
     }
 
+    private void setJSBundle(ReactHostDelegate reactHostDelegate, String latestJSBundleFile) throws IllegalAccessException {
+        assert reactHostDelegate != null;
+        Field jsBundleLoaderField = reactHostDelegate.getClass().getDeclaredField("jsBundleLoader");
+        jsBundleLoaderField.setAccessible(true);
+        jsBundleLoaderField.set(reactHostDelegate, latestJSBundleLoader);
+    }
+
     private void loadBundle() {
         clearLifecycleEventListener();
-        try {
-            mCodePush.clearDebugCacheIfNeeded(resolveInstanceManager());
-        } catch(Exception e) {
-            // If we got error in out reflection we should clear debug cache anyway.
-            mCodePush.clearDebugCacheIfNeeded(null);
-        }
-
-        try {
-            // #1) Get the ReactInstanceManager instance, which is what includes the
-            //     logic to reload the current React context.
-            final ReactInstanceManager instanceManager = resolveInstanceManager();
-            if (instanceManager == null) {
-                return;
+    
+        if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+            try {
+                DevSupportManager devSupportManager = null;
+                ReactHost reactHost = resolveReactHost();
+                if (reactHost != null) {
+                    devSupportManager = reactHost.getDevSupportManager();
+                }
+                boolean isLiveReloadEnabled = isLiveReloadEnabled(devSupportManager);
+                mCodePush.clearDebugCacheIfNeeded(isLiveReloadEnabled);
+            } catch (Exception e) {
+                mCodePush.clearDebugCacheIfNeeded(false);
             }
-
-            String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
-
-            // #2) Update the locally stored JS bundle file path
-            setJSBundle(instanceManager, latestJSBundleFile);
-
-            // #3) Get the context creation method and fire it on the UI thread (which RN enforces)
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
+    
+            try {
+                final ReactHost reactHost = resolveReactHost();
+                if (reactHost == null) return;
+    
+                String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
+                setJSBundle(getReactHostDelegate((ReactHostImpl) reactHost), latestJSBundleFile);
+    
+                reactHost.reload("CodePush triggers reload");
+                mCodePush.initializeUpdateAfterRestart();
+            } catch (Exception e) {
+                CodePushUtils.log("Fallback to legacy restart due to: " + e.getMessage());
+                loadBundleLegacy();
+            }
+    
+        } else {
+            try {
+                DevSupportManager devSupportManager = null;
+                ReactInstanceManager instanceManager = resolveInstanceManager();
+                if (instanceManager != null) {
+                    devSupportManager = instanceManager.getDevSupportManager();
+                }
+                boolean isLiveReloadEnabled = isLiveReloadEnabled(devSupportManager);
+                mCodePush.clearDebugCacheIfNeeded(isLiveReloadEnabled);
+            } catch (Exception e) {
+                mCodePush.clearDebugCacheIfNeeded(false);
+            }
+    
+            try {
+                final ReactInstanceManager instanceManager = resolveInstanceManager();
+                if (instanceManager == null) return;
+    
+                String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
+                setJSBundle(instanceManager, latestJSBundleFile);
+    
+                new Handler(Looper.getMainLooper()).post(() -> {
                     try {
-                        // reload method introduced in RN 0.74 (https://github.com/reactwg/react-native-new-architecture/discussions/174)
-                        // so, we need to check if reload method exists and call it
-                        try {
-                            ReactDelegate reactDelegate = resolveReactDelegate();
-                            if (reactDelegate == null) {
-                                throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
-                            }
-
-                            resetReactRootViews(reactDelegate);
-
-                            Method reloadMethod = reactDelegate.getClass().getMethod("reload");
-                            reloadMethod.invoke(reactDelegate);
-                        } catch (NoSuchMethodException e) {
-                            // RN < 0.74 calls ReactInstanceManager.recreateReactContextInBackground() directly
-                            instanceManager.recreateReactContextInBackground();
-                        }
+                        instanceManager.recreateReactContextInBackground();
                         mCodePush.initializeUpdateAfterRestart();
                     } catch (Exception e) {
-                        // The recreation method threw an unknown exception
-                        // so just simply fallback to restarting the Activity (if it exists)
                         loadBundleLegacy();
                     }
-                }
-            });
-
-        } catch (Exception e) {
-            // Our reflection logic failed somewhere
-            // so fall back to restarting the Activity (if it exists)
-            CodePushUtils.log("Failed to load the bundle, falling back to restarting the Activity (if it exists). " + e.getMessage());
-            loadBundleLegacy();
+                });
+            } catch (Exception e) {
+                CodePushUtils.log("Fallback to legacy restart due to: " + e.getMessage());
+                loadBundleLegacy();
+            }
         }
+    }
+
+    private boolean isLiveReloadEnabled(DevSupportManager devSupportManager) {
+        if (devSupportManager != null) {
+            DeveloperSettings devSettings = devSupportManager.getDevSettings();
+            for (Method m : devSettings.getClass().getMethods()) {
+                if ("isReloadOnJSChangeEnabled".equals(m.getName())) {
+                    try {
+                        return (boolean) m.invoke(devSettings);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return false;
     }
 
     // Fix freezing that occurs when reloading the app (RN >= 0.77.1 Old Architecture)
@@ -780,5 +811,19 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void removeListeners(Integer count) {
         // Remove upstream listeners, stop unnecessary background tasks
+    }
+
+    public ReactHostDelegate getReactHostDelegate(ReactHostImpl reactHostImpl) {
+        try {
+            Class<?> clazz = reactHostImpl.getClass();
+            Field field = clazz.getDeclaredField("mReactHostDelegate");
+            field.setAccessible(true);
+
+            // Get the value of the field for the provided instance
+            return (ReactHostDelegate) field.get(reactHostImpl);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
