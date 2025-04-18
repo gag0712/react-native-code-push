@@ -166,86 +166,75 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
 
     private void loadBundle() {
         clearLifecycleEventListener();
-        try {
-            mCodePush.clearDebugCacheIfNeeded(resolveInstanceManager());
-        } catch(Exception e) {
-            // If we got error in out reflection we should clear debug cache anyway.
-            mCodePush.clearDebugCacheIfNeeded(null);
-        }
-
-        try {
-            // #1) Get the ReactInstanceManager instance, which is what includes the
-            //     logic to reload the current React context.
-            final ReactInstanceManager instanceManager = resolveInstanceManager();
-            if (instanceManager == null) {
-                return;
-            }
-
-            String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
-
-            // #2) Update the locally stored JS bundle file path
-            setJSBundle(instanceManager, latestJSBundleFile);
-
-            // #3) Get the context creation method and fire it on the UI thread (which RN enforces)
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        // reload method introduced in RN 0.74 (https://github.com/reactwg/react-native-new-architecture/discussions/174)
-                        // so, we need to check if reload method exists and call it
+    
+        String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
+    
+        if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+            try {
+                ReactHost reactHost = resolveReactHost();
+                if (reactHost == null) {
+                    CodePushUtils.log("ReactHost is null, fallback to legacy reload");
+                    loadBundleLegacy();
+                    return;
+                }
+            
+                setJSBundle(resolveInstanceManager(), latestJSBundleFile );
+            
+                // 🔍 [여기] JSBundleLoader 확인
+                try {
+                    JSBundleLoader loader = reactHost.getJSBundleLoader();
+                    if (loader != null) {
+                        Log.d("CodePush", "🔍 JSBundleLoader instance: " + loader.getClass().getName());
                         try {
-                            if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
-                                final ReactHost reactHost = resolveReactHost();
-                                if (reactHost == null) return;
-
-                                reactHost.reload("CodePush triggers reload");
-                                mCodePush.initializeUpdateAfterRestart();
-                            }
-                            else {
-                                ReactDelegate reactDelegate = resolveReactDelegate();
-                                if (reactDelegate == null) {
-                                    throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
-                                }
-    
-                                resetReactRootViews(reactDelegate);
-    
-                                Method reloadMethod = reactDelegate.getClass().getMethod("reload");
-                                reloadMethod.invoke(reactDelegate);
-                            }
-                        } catch (NoSuchMethodException e) {
-                            // RN < 0.74 calls ReactInstanceManager.recreateReactContextInBackground() directly
-                            instanceManager.recreateReactContextInBackground();
+                            Field bundleField = loader.getClass().getDeclaredField("mJSBundleFile");
+                            bundleField.setAccessible(true);
+                            String path = (String) bundleField.get(loader);
+                            Log.d("CodePush", "📦 Bundle path before reload: " + path);
+                        } catch (NoSuchFieldException nsf) {
+                            Log.w("CodePush", "⚠️ Cannot access mJSBundleFile: " + nsf.getMessage());
                         }
+                    } else {
+                        Log.w("CodePush", "⚠️ JSBundleLoader is null");
+                    }
+                } catch (Exception logEx) {
+                    Log.e("CodePush", "❌ Failed to inspect JSBundleLoader", logEx);
+                }
+            
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    try {
+                        reactHost.reload("CodePush triggers reload");
                         mCodePush.initializeUpdateAfterRestart();
                     } catch (Exception e) {
-                        // The recreation method threw an unknown exception
-                        // so just simply fallback to restarting the Activity (if it exists)
+                        CodePushUtils.log("ReactHost.reload() failed: " + e.getMessage());
                         loadBundleLegacy();
                     }
-                }
-            });
-
-        } catch (Exception e) {
-            // Our reflection logic failed somewhere
-            // so fall back to restarting the Activity (if it exists)
-            CodePushUtils.log("Failed to load the bundle, falling back to restarting the Activity (if it exists). " + e.getMessage());
-            loadBundleLegacy();
-        }
-    }
-
-
-    private boolean isLiveReloadEnabled(DevSupportManager devSupportManager) {
-        if (devSupportManager != null) {
-            DeveloperSettings devSettings = devSupportManager.getDevSettings();
-            for (Method m : devSettings.getClass().getMethods()) {
-                if ("isReloadOnJSChangeEnabled".equals(m.getName())) {
+                });
+            
+            } catch (Exception e) {
+                CodePushUtils.log("loadBundle (Bridgeless) failed: " + e.getMessage());
+                loadBundleLegacy();
+            }
+    
+        } else {
+            try {
+                final ReactInstanceManager instanceManager = resolveInstanceManager();
+                if (instanceManager == null) return;
+    
+                setJSBundle(instanceManager, latestJSBundleFile);
+    
+                new Handler(Looper.getMainLooper()).post(() -> {
                     try {
-                        return (boolean) m.invoke(devSettings);
-                    } catch (Exception ignored) {}
-                }
+                        instanceManager.recreateReactContextInBackground();
+                        mCodePush.initializeUpdateAfterRestart();
+                    } catch (Exception e) {
+                        loadBundleLegacy();
+                    }
+                });
+    
+            } catch (Exception e) {
+                loadBundleLegacy();
             }
         }
-        return false;
     }
 
     // Fix freezing that occurs when reloading the app (RN >= 0.77.1 Old Architecture)
