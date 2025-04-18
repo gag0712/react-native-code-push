@@ -1,6 +1,8 @@
 package com.microsoft.codepush.react;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -25,10 +27,13 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.annotations.UnstableReactNativeAPI;
+import com.facebook.react.devsupport.interfaces.DevSupportManager;
 import com.facebook.react.modules.core.ChoreographerCompat;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.core.ReactChoreographer;
+import com.facebook.react.modules.debug.interfaces.DeveloperSettings;
 import com.facebook.react.runtime.ReactHostDelegate;
+import com.facebook.react.runtime.ReactHostImpl;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -114,6 +119,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             }
         });
     }
+    
 
     // Use reflection to find and set the appropriate fields on ReactInstanceManager. See #556 for a proposal for a less brittle way
     // to approach this.
@@ -188,15 +194,24 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                         // reload method introduced in RN 0.74 (https://github.com/reactwg/react-native-new-architecture/discussions/174)
                         // so, we need to check if reload method exists and call it
                         try {
-                            ReactDelegate reactDelegate = resolveReactDelegate();
-                            if (reactDelegate == null) {
-                                throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
+                            if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+                                final ReactHost reactHost = resolveReactHost();
+                                if (reactHost == null) return;
+
+                                reactHost.reload("CodePush triggers reload");
+                                mCodePush.initializeUpdateAfterRestart();
                             }
-
-                            resetReactRootViews(reactDelegate);
-
-                            Method reloadMethod = reactDelegate.getClass().getMethod("reload");
-                            reloadMethod.invoke(reactDelegate);
+                            else {
+                                ReactDelegate reactDelegate = resolveReactDelegate();
+                                if (reactDelegate == null) {
+                                    throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
+                                }
+    
+                                resetReactRootViews(reactDelegate);
+    
+                                Method reloadMethod = reactDelegate.getClass().getMethod("reload");
+                                reloadMethod.invoke(reactDelegate);
+                            }
                         } catch (NoSuchMethodException e) {
                             // RN < 0.74 calls ReactInstanceManager.recreateReactContextInBackground() directly
                             instanceManager.recreateReactContextInBackground();
@@ -216,6 +231,21 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             CodePushUtils.log("Failed to load the bundle, falling back to restarting the Activity (if it exists). " + e.getMessage());
             loadBundleLegacy();
         }
+    }
+
+
+    private boolean isLiveReloadEnabled(DevSupportManager devSupportManager) {
+        if (devSupportManager != null) {
+            DeveloperSettings devSettings = devSupportManager.getDevSettings();
+            for (Method m : devSettings.getClass().getMethods()) {
+                if ("isReloadOnJSChangeEnabled".equals(m.getName())) {
+                    try {
+                        return (boolean) m.invoke(devSettings);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return false;
     }
 
     // Fix freezing that occurs when reloading the app (RN >= 0.77.1 Old Architecture)
@@ -780,5 +810,19 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void removeListeners(Integer count) {
         // Remove upstream listeners, stop unnecessary background tasks
+    }
+
+    public ReactHostDelegate getReactHostDelegate(ReactHostImpl reactHostImpl) {
+        try {
+            Class<?> clazz = reactHostImpl.getClass();
+            Field field = clazz.getDeclaredField("mReactHostDelegate");
+            field.setAccessible(true);
+
+            // Get the value of the field for the provided instance
+            return (ReactHostDelegate) field.get(reactHostImpl);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
