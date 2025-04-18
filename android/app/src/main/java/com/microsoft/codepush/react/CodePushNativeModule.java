@@ -164,6 +164,23 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
         jsBundleLoaderField.set(reactHostDelegate, latestJSBundleLoader);
     }
 
+    private void setJSBundle(ReactHostDelegate reactHostDelegate, JSBundleLoader latestJSBundleLoader) throws IllegalAccessException {
+        try {
+            if (latestJSBundleFile.toLowerCase().startsWith("assets://")) {
+                latestJSBundleLoader = JSBundleLoader.createAssetLoader(getReactApplicationContext(), latestJSBundleFile, false);
+            } else {
+                latestJSBundleLoader = JSBundleLoader.createFileLoader(latestJSBundleFile);
+            }
+
+            Field jsBundleLoaderField = reactHostDelegate.getClass().getDeclaredField("jsBundleLoader");
+            jsBundleLoaderField.setAccessible(true);
+            jsBundleLoaderField.set(reactHostDelegate, latestJSBundleLoader);
+        } catch (Exception e) {
+            CodePushUtils.log("Unable to set JSBundle of ReactHostDelegate - CodePush may not support this version of React Native");
+            throw new IllegalAccessException("Could not setJSBundle");
+        }
+    }
+
     private void loadBundle() {
         clearLifecycleEventListener();
     
@@ -171,50 +188,48 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
     
         if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
             try {
-                ReactHost reactHost = resolveReactHost();
+                DevSupportManager devSupportManager = null;
+                    ReactHost reactHost = resolveReactHost();
+                    if (reactHost != null) {
+                        devSupportManager = reactHost.getDevSupportManager();
+                    }
+                boolean isLiveReloadEnabled = isLiveReloadEnabled(devSupportManager);
+
+                mCodePush.clearDebugCacheIfNeeded(isLiveReloadEnabled);
+            } catch(Exception e) {
+                // If we got error in out reflection we should clear debug cache anyway.
+                mCodePush.clearDebugCacheIfNeeded(false);
+            }
+
+            try {
+                // #1) Get the ReactHost instance, which is what includes the
+                //     logic to reload the current React context.
+                final ReactHost reactHost = resolveReactHost();
                 if (reactHost == null) {
-                    CodePushUtils.log("ReactHost is null, fallback to legacy reload");
-                    loadBundleLegacy();
                     return;
                 }
-            
-                setJSBundle(resolveInstanceManager(), latestJSBundleFile );
-            
-                // 🔍 [여기] JSBundleLoader 확인
+
+                String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
+
+                // #2) Update the locally stored JS bundle file path
+                setJSBundle(getReactHostDelegate((ReactHostImpl) reactHost), latestJSBundleFile);
+
+                // #3) Get the context creation method
                 try {
-                    JSBundleLoader loader = reactHost.getJSBundleLoader();
-                    if (loader != null) {
-                        Log.d("CodePush", "🔍 JSBundleLoader instance: " + loader.getClass().getName());
-                        try {
-                            Field bundleField = loader.getClass().getDeclaredField("mJSBundleFile");
-                            bundleField.setAccessible(true);
-                            String path = (String) bundleField.get(loader);
-                            Log.d("CodePush", "📦 Bundle path before reload: " + path);
-                        } catch (NoSuchFieldException nsf) {
-                            Log.w("CodePush", "⚠️ Cannot access mJSBundleFile: " + nsf.getMessage());
-                        }
-                    } else {
-                        Log.w("CodePush", "⚠️ JSBundleLoader is null");
-                    }
-                } catch (Exception logEx) {
-                    Log.e("CodePush", "❌ Failed to inspect JSBundleLoader", logEx);
+                    reactHost.reload("CodePush triggers reload");
+                    mCodePush.initializeUpdateAfterRestart();
+                } catch (Exception e) {
+                    // The recreation method threw an unknown exception
+                    // so just simply fallback to restarting the Activity (if it exists)
+                    loadBundleLegacy();
                 }
-            
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    try {
-                        reactHost.reload("CodePush triggers reload");
-                        mCodePush.initializeUpdateAfterRestart();
-                    } catch (Exception e) {
-                        CodePushUtils.log("ReactHost.reload() failed: " + e.getMessage());
-                        loadBundleLegacy();
-                    }
-                });
-            
+
             } catch (Exception e) {
-                CodePushUtils.log("loadBundle (Bridgeless) failed: " + e.getMessage());
+                // Our reflection logic failed somewhere
+                // so fall back to restarting the Activity (if it exists)
+                CodePushUtils.log("Failed to load the bundle, falling back to restarting the Activity (if it exists). " + e.getMessage());
                 loadBundleLegacy();
             }
-    
         } else {
             try {
                 final ReactInstanceManager instanceManager = resolveInstanceManager();
@@ -235,6 +250,24 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                 loadBundleLegacy();
             }
         }
+    }
+
+    private boolean isLiveReloadEnabled(DevSupportManager devSupportManager) {
+        if (devSupportManager != null) {
+            DeveloperSettings devSettings = devSupportManager.getDevSettings();
+            Method[] methods = devSettings.getClass().getMethods();
+            for (Method m : methods) {
+                if (m.getName().equals("isReloadOnJSChangeEnabled")) {
+                    try {
+                        return (boolean) m.invoke(devSettings);
+                    } catch (Exception x) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     // Fix freezing that occurs when reloading the app (RN >= 0.77.1 Old Architecture)

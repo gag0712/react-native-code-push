@@ -161,6 +161,18 @@ public class CodePush implements ReactPackage {
         }
     }
 
+    public void clearDebugCacheIfNeeded(boolean isLiveReloadEnabled) {
+        // for checking if we use LiveReload mode. In this case we should not remove ReactNativeDevBundle.js file
+        // because we get error with trying to get this after reloading. Issue: https://github.com/microsoft/react-native-code-push/issues/1272
+        if (mIsDebugMode && mSettingsManager.isPendingUpdate(null) && !isLiveReloadEnabled) {
+            // This needs to be kept in sync with https://github.com/facebook/react-native/blob/master/ReactAndroid/src/main/java/com/facebook/react/devsupport/DevSupportManager.java#L78
+            File cachedDevBundle = new File(mContext.getFilesDir(), "ReactNativeDevBundle.js");
+            if (cachedDevBundle.exists()) {
+                cachedDevBundle.delete();
+            }
+        }
+    }
+
     public boolean didUpdate() {
         return mDidUpdate;
     }
