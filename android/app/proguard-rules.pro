@@ -20,6 +20,22 @@
 -keepclassmembers class com.facebook.react.ReactInstanceManager {
     private final ** mBundleLoader;
 }
+-keepclassmembers class com.facebook.react.ReactDelegate {
+    private ** mReactHost; # bridgeless
+    public void reload(...); # RN 0.74 and above
+}
+# RN 0.74 and above
+-keepclassmembers class com.facebook.react.ReactActivity {
+    public ** getReactDelegate(...);
+}
+# bridgeless
+-keepclassmembers class com.facebook.react.defaults.DefaultReactHostDelegate {
+    private ** jsBundleLoader;
+}
+# bridgeless
+-keepclassmembers class com.facebook.react.runtime.ReactHostImpl {
+    private final ** mReactHostDelegate;
+}
 
 # Can't find referenced class org.bouncycastle.**
 -dontwarn com.nimbusds.jose.**
