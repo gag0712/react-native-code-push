@@ -1,12 +1,14 @@
 const fs = require('fs');
 const { prepareToBundleJS } = require('../../functions/prepareToBundleJS');
 const { runReactNativeBundleCommand } = require('../../functions/runReactNativeBundleCommand');
+const { runExpoBundleCommand } = require('../../functions/runExpoBundleCommand');
 const { getReactTempDir } = require('../../functions/getReactTempDir');
 const { runHermesEmitBinaryCommand } = require('../../functions/runHermesEmitBinaryCommand');
 const { makeCodePushBundle } = require('../../functions/makeCodePushBundle');
 const { ROOT_OUTPUT_DIR, ENTRY_FILE } = require('../../constant');
 
 /**
+ * @param type {string} 'react-native' | 'expo'
  * @param platform {string} 'ios' | 'android'
  * @param outputRootPath {string}
  * @param entryFile {string}
@@ -15,6 +17,7 @@ const { ROOT_OUTPUT_DIR, ENTRY_FILE } = require('../../constant');
  * @return {Promise<string>} CodePush bundle file name (equals to packageHash)
  */
 async function bundleCodePush(
+  type = 'react-native',
   platform = 'ios',
   outputRootPath = ROOT_OUTPUT_DIR,
   entryFile = ENTRY_FILE,
@@ -32,13 +35,24 @@ async function bundleCodePush(
 
     prepareToBundleJS({ deleteDirs: [outputRootPath, getReactTempDir()], makeDir: OUTPUT_CONTENT_PATH });
 
-    runReactNativeBundleCommand(
-      _jsBundleName,
-      OUTPUT_CONTENT_PATH,
-      platform,
-      SOURCEMAP_OUTPUT,
-      entryFile,
-    );
+    if (type === 'react-native') {
+      runReactNativeBundleCommand(
+        _jsBundleName,
+        OUTPUT_CONTENT_PATH,
+        platform,
+        SOURCEMAP_OUTPUT,
+        entryFile,
+      );
+    } else if (type === 'expo') {
+      runExpoBundleCommand(
+        _jsBundleName,
+        OUTPUT_CONTENT_PATH,
+        platform,
+        SOURCEMAP_OUTPUT,
+        entryFile,
+      );
+    }
+
     console.log('log: JS bundling complete');
 
     await runHermesEmitBinaryCommand(
