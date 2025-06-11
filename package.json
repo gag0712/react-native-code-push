@@ -48,7 +48,13 @@
     "yazl": "^3.3.1"
   },
   "peerDependencies": {
+    "expo": ">=50.0.0",
     "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "expo": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
