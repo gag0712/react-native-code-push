@@ -24,7 +24,7 @@ function iosApplyImplementation(
     Please ${replace ? 'replace' : 'add'} "${add.replace(/\n/g, '').trim()}" to the AppDelegate.(m|swift).
     Supported format: Expo SDK default template.
 
-    iOS manual setup: https://github.com/Soomgo-Mobile/react-native-code-push#2-ios-setup
+    iOS manual setup: https://github.com/Soomgo-Mobile/react-native-code-push#3-ios-setup
     `,
   );
 
