@@ -330,7 +330,7 @@ Create a new release history for a specific binary app version.
 **Example:**
 - Create a new release history for the binary app version `1.0.0`. 
 
-```
+```bash
 npx code-push create-history --binary-version 1.0.0 --platform ios --identifier staging
 ```
 
@@ -342,7 +342,7 @@ Display the release history for a specific binary app version.
 **Example:**
 - Show the release history for the binary app version `1.0.0`.
 
-```
+```bash
 npx code-push show-history --binary-version 1.0.0 --platform ios --identifier staging
 ```
 
@@ -354,11 +354,15 @@ Release a CodePush update for a specific binary app version.
 **Example:**
 - Release a CodePush update `1.0.1` targeting the binary app version `1.0.0`.
 
-```
+```bash
 npx code-push release --binary-version 1.0.0 --app-version 1.0.1 \
                       --platform ios --identifier staging --entry-file index.js \
                       --mandatory true
+
+# Expo project
+npx code-push release --type expo --binary-version 1.0.0 --app-version 1.0.1 --platform ios
 ```
+- `--type`: Project type (react-native (default) | expo)
 - `--binary-version`: The version of the binary app that the CodePush update is targeting.
 - `--app-version`: The version of the CodePush update itself.
 
@@ -375,7 +379,7 @@ Update the release history for a specific CodePush update.
 **Example:**
 - Rollback the CodePush update `1.0.1` (targeting the binary app version `1.0.0`).
 
-```
+```bash
 npx code-push update-history --binary-version 1.0.0 --app-version 1.0.1 \
                              --platform ios --identifier staging \
                              --enable false
@@ -386,10 +390,16 @@ npx code-push update-history --binary-version 1.0.0 --app-version 1.0.1 \
 Create a CodePush bundle file.
 
 **Example:**
-```
+```bash
 npx code-push bundle --platform android --entry-file index.js
+
+# Expo project
+npx code-push bundle --type expo --platform android --entry-file index.js
 ```
+- `--type`: Project type (react-native (default) | expo)
 
 By default, the bundle file is created in the `/build/bundleOutput` directory.
+
+>[!NOTE] For Expo projects, the CLI uses `expo export:embed` command for bundling instead of React Native's bundle command.
 
 (The file name represents a hash value of the bundle content.)
