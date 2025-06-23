@@ -8,7 +8,7 @@ const { makeCodePushBundle } = require('../../functions/makeCodePushBundle');
 const { ROOT_OUTPUT_DIR, ENTRY_FILE } = require('../../constant');
 
 /**
- * @param type {string} 'react-native' | 'expo'
+ * @param framework {string|undefined} 'expo'
  * @param platform {string} 'ios' | 'android'
  * @param outputRootPath {string}
  * @param entryFile {string}
@@ -17,7 +17,7 @@ const { ROOT_OUTPUT_DIR, ENTRY_FILE } = require('../../constant');
  * @return {Promise<string>} CodePush bundle file name (equals to packageHash)
  */
 async function bundleCodePush(
-  type = 'react-native',
+  framework,
   platform = 'ios',
   outputRootPath = ROOT_OUTPUT_DIR,
   entryFile = ENTRY_FILE,
@@ -35,16 +35,16 @@ async function bundleCodePush(
 
     prepareToBundleJS({ deleteDirs: [outputRootPath, getReactTempDir()], makeDir: OUTPUT_CONTENT_PATH });
 
-    if (type === 'react-native') {
-      runReactNativeBundleCommand(
+    if (framework === 'expo') {
+      runExpoBundleCommand(
         _jsBundleName,
         OUTPUT_CONTENT_PATH,
         platform,
         SOURCEMAP_OUTPUT,
         entryFile,
       );
-    } else if (type === 'expo') {
-      runExpoBundleCommand(
+    } else {
+      runReactNativeBundleCommand(
         _jsBundleName,
         OUTPUT_CONTENT_PATH,
         platform,

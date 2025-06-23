@@ -360,9 +360,9 @@ npx code-push release --binary-version 1.0.0 --app-version 1.0.1 \
                       --mandatory true
 
 # Expo project
-npx code-push release --type expo --binary-version 1.0.0 --app-version 1.0.1 --platform ios
+npx code-push release --framework expo --binary-version 1.0.0 --app-version 1.0.1 --platform ios
 ```
-- `--type`: Project type (react-native (default) | expo)
+- `--framework`(`-f`) : Framework type (expo)
 - `--binary-version`: The version of the binary app that the CodePush update is targeting.
 - `--app-version`: The version of the CodePush update itself.
 
@@ -394,12 +394,13 @@ Create a CodePush bundle file.
 npx code-push bundle --platform android --entry-file index.js
 
 # Expo project
-npx code-push bundle --type expo --platform android --entry-file index.js
+npx code-push bundle --framework expo --platform android --entry-file index.js
 ```
-- `--type`: Project type (react-native (default) | expo)
+- `--framework`(`-f`): Framework type (expo)
 
 By default, the bundle file is created in the `/build/bundleOutput` directory.
 
->[!NOTE] For Expo projects, the CLI uses `expo export:embed` command for bundling instead of React Native's bundle command.
+> [!NOTE]
+> For Expo projects, the CLI uses `expo export:embed` command for bundling instead of React Native's bundle command.
 
 (The file name represents a hash value of the bundle content.)

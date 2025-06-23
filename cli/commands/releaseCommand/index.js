@@ -7,7 +7,7 @@ program.command('release')
     .description('Deploys a new CodePush update for a target binary app.\nAfter creating the CodePush bundle, it uploads the file and updates the ReleaseHistory information.\n`bundleUploader`, `getReleaseHistory`, and `setReleaseHistory` functions should be implemented in the config file.')
     .requiredOption('-b, --binary-version <string>', '(Required) The target binary version')
     .requiredOption('-v, --app-version <string>', '(Required) The app version to be released. It must be greater than the binary version.')
-    .addOption(new Option('-t, --type <type>', 'project type (react-native | expo)').choices(['react-native', 'expo']).default('react-native'))
+    .addOption(new Option('-f, --framework <type>', 'framework type (expo)').choices(['expo']))
     .addOption(new Option('-p, --platform <type>', 'platform').choices(['ios', 'android']).default('ios'))
     .option('-i, --identifier <string>', 'reserved characters to distinguish the release.')
     .option('-c, --config <path>', 'set config file name (JS/TS)', CONFIG_FILE_NAME)
@@ -23,7 +23,7 @@ program.command('release')
      * @param {Object} options
      * @param {string} options.binaryVersion
      * @param {string} options.appVersion
-     * @param {string} options.type
+     * @param {string} options.framework
      * @param {string} options.platform
      * @param {string} options.identifier
      * @param {string} options.config
@@ -46,7 +46,7 @@ program.command('release')
             config.setReleaseHistory,
             options.binaryVersion,
             options.appVersion,
-            options.type,
+            options.framework,
             options.platform,
             options.identifier,
             options.outputPath,
