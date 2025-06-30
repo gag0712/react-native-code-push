@@ -24,14 +24,14 @@ function iosApplyImplementation(
     Please ${replace ? 'replace' : 'add'} "${add.replace(/\n/g, '').trim()}" to the AppDelegate.(m|swift).
     Supported format: Expo SDK default template.
 
-    iOS manual setup: https://github.com/Soomgo-Mobile/react-native-code-push#3-ios-setup
+    iOS manual setup: https://github.com/Soomgo-Mobile/react-native-code-push#2-ios-setup
     `,
   );
 
   return appDelegate;
 }
 
-function getBridgingHeaderPathFromXcode(project) {
+function getBridgingHeaderFileFromXcode(project) {
   const buildConfigs = project.pbxXCBuildConfigurationSection();
 
   for (const key in buildConfigs) {
@@ -41,11 +41,11 @@ function getBridgingHeaderPathFromXcode(project) {
       config.buildSettings &&
       config.buildSettings['SWIFT_OBJC_BRIDGING_HEADER']
     ) {
-      const bridgingHeaderPath = config.buildSettings[
+      const bridgingHeaderFile = config.buildSettings[
         'SWIFT_OBJC_BRIDGING_HEADER'
       ].replace(/"/g, '');
 
-      return bridgingHeaderPath;
+      return bridgingHeaderFile;
     }
   }
   return null;
@@ -97,22 +97,22 @@ const withIosBridgingHeader = (config) => {
     const appDelegate = getAppDelegate(projectRoot);
 
     if (appDelegate.language === 'swift') {
-      const bridgingHeaderPath = getBridgingHeaderPathFromXcode(
+      const bridgingHeaderFile = getBridgingHeaderFileFromXcode(
         action.modResults,
       );
 
-      const bridgingHeaderFilePath = path.join(
+      const bridgingHeaderPath = path.join(
         action.modRequest.platformProjectRoot,
-        bridgingHeaderPath,
+        bridgingHeaderFile,
       );
 
-      if (fs.existsSync(bridgingHeaderFilePath)) {
-        let content = fs.readFileSync(bridgingHeaderFilePath, 'utf8');
+      if (fs.existsSync(bridgingHeaderPath)) {
+        let content = fs.readFileSync(bridgingHeaderPath, 'utf8');
         const codePushImport = '#import <CodePush/CodePush.h>';
 
         if (!content.includes(codePushImport)) {
           content += `${codePushImport}\n`;
-          fs.writeFileSync(bridgingHeaderFilePath, content);
+          fs.writeFileSync(bridgingHeaderPath, content);
         }
 
         return action;
@@ -121,11 +121,12 @@ const withIosBridgingHeader = (config) => {
       WarningAggregator.addWarningIOS(
         'withIosBridgingHeader',
         `
-        Failed to detect ${bridgingHeaderFilePath} file.
+        Failed to detect ${bridgingHeaderPath} file.
         Please add CodePush integration manually:
         #import <CodePush/CodePush.h>
 
         Supported format: Expo SDK default template.
+        iOS manual setup: https://github.com/Soomgo-Mobile/react-native-code-push#2-edit-appdelegate-code
         `
       );
 

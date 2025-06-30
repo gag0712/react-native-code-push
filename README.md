@@ -35,30 +35,7 @@ The following changes are optional but recommended for cleaning up the old confi
 npm install @bravemobile/react-native-code-push
 ```
 
-### 2. Expo Setup
-For Expo projects, you can use the automated config plugin instead of manual setup.
-
-**Add plugin to your Expo configuration:**
-```js
-// app.config.js
-export default {
-  expo: {
-    plugins: ["@bravemobile/react-native-code-push"],
-  },
-};
-```
-
-**Run prebuild to apply changes:**
-```bash
-npx expo prebuild
-```
-
->[!NOTE] The plugin automatically handles all native iOS and Android code modifications. No manual editing of AppDelegate, MainApplication, or gradle files is required.
-
-**Requirements**
-Expo SDK: 50.0.0 or higher
-
-### 3. iOS Setup
+### 2. iOS Setup
 
 #### (1) Install CocoaPods Dependencies
 
@@ -133,7 +110,7 @@ Then, edit `AppDelegate.swift` like below.
 ```
 
 
-### 4. Android Setup
+### 3. Android Setup
 
 #### (1) Edit `android/app/build.gradle`
 
@@ -183,6 +160,30 @@ Add the following line to the end of the file.
     // ...
   }
 ```
+
+### 4. Expo Setup
+For Expo projects, you can use the automated config plugin instead of manual setup.
+
+**Add plugin to your Expo configuration:**
+```js
+// app.config.js
+export default {
+  expo: {
+    plugins: ["@bravemobile/react-native-code-push"],
+  },
+};
+```
+
+**Run prebuild to apply changes:**
+```bash
+npx expo prebuild
+```
+
+> [!NOTE]
+> The plugin automatically handles all native iOS and Android code modifications. No manual editing of AppDelegate, MainApplication, or gradle files is required.
+
+**Requirements**
+Expo SDK: 50.0.0 or higher
 
 ### 5. "CodePush-ify" Your App
 

@@ -31,7 +31,7 @@ function androidMainApplicationApplyImplementation(
     Please add "${add.replace(/\n/g, '').trim()}" to the MainApplication.kt.
     Supported format: Expo SDK default template.
 
-    Android manual setup: https://github.com/Soomgo-Mobile/react-native-code-push#4-android-setup
+    Android manual setup: https://github.com/Soomgo-Mobile/react-native-code-push#3-android-setup
     `,
   );
 
