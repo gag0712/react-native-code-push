@@ -253,11 +253,11 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
       const label = statusReport.package.label;
       if (statusReport.status === "DeploymentSucceeded") {
         log(`Reporting CodePush update success (${label})`);
-        sharedCodePushOptions?.onUpdateSuccess(label);
+        sharedCodePushOptions?.onUpdateSuccess?.(label);
       } else {
         log(`Reporting CodePush update rollback (${label})`);
         await NativeCodePush.setLatestRollbackInfo(statusReport.package.packageHash);
-        sharedCodePushOptions?.onUpdateRollback(label);
+        sharedCodePushOptions?.onUpdateRollback?.(label);
       }
     }
 
@@ -564,7 +564,7 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
     }
   } catch (error) {
     syncStatusChangeCallback(CodePush.SyncStatus.UNKNOWN_ERROR);
-    sharedCodePushOptions?.onSyncError(remotePackageLabel ?? 'unknown', error);
+    sharedCodePushOptions?.onSyncError?.(remotePackageLabel ?? 'unknown', error);
     log(error.message);
     throw error;
   }

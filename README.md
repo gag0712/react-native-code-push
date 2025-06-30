@@ -1,14 +1,10 @@
 # @bravemobile/react-native-code-push
 
-**Seamless transition from AppCenter to a fully self-hosted CodePush.**
+### Seamless Transition from AppCenter to a Fully Self-Hosted CodePush
 
-
-This package was created to continue using React Native CodePush without AppCenter.
-
-It allows self-hosting of CodePush deployments while retaining essential operational features.
-
-
-
+- **No API Server Needed** – Use static hosting solutions (e.g., AWS S3) without maintaining additional API servers.
+- **Familiar API** – Built on `microsoft/react-native-code-push`, ensuring compatibility and stability.
+- **Flexible Deployment** – Implement your own release workflow, giving you complete control over the deployment process.
 
 ### 🚀 New Architecture support
 
@@ -367,15 +363,15 @@ Release a CodePush update for a specific binary app version.
 - Release a CodePush update `1.0.1` targeting the binary app version `1.0.0`.
 
 ```
-npx code-push release --target-binary-version 1.0.0 --app-version 1.0.1 \
+npx code-push release --binary-version 1.0.0 --app-version 1.0.1 \
                       --platform ios --identifier staging --entry-file index.js \
                       --mandatory true
 ```
-- `--target-binary-version`: The version of the binary app that the CodePush update is targeting.
+- `--binary-version`: The version of the binary app that the CodePush update is targeting.
 - `--app-version`: The version of the CodePush update itself.
 
 > [!IMPORTANT]
-> `--app-version` should be greater than `--target-binary-version` (SemVer comparison).
+> `--app-version` should be greater than `--binary-version` (SemVer comparison).
 
 
 #### `update-history`
@@ -388,7 +384,7 @@ Update the release history for a specific CodePush update.
 - Rollback the CodePush update `1.0.1` (targeting the binary app version `1.0.0`).
 
 ```
-npx code-push update-history --target-binary-version 1.0.0 --app-version 1.0.1 \
+npx code-push update-history --binary-version 1.0.0 --app-version 1.0.1 \
                              --platform ios --identifier staging \
                              --enable false
 ```
