@@ -4,6 +4,7 @@ const { OUTPUT_BUNDLE_DIR, ROOT_OUTPUT_DIR, ENTRY_FILE } = require('../../consta
 
 program.command('bundle')
     .description('Creates a CodePush bundle file (assumes Hermes is enabled).')
+    .addOption(new Option('-f, --framework <type>', 'framework type (expo)').choices(['expo']))
     .addOption(new Option('-p, --platform <type>', 'platform').choices(['ios', 'android']).default('ios'))
     .option('-o, --output-path <string>', 'path to output root directory', ROOT_OUTPUT_DIR)
     .option('-e, --entry-file <string>', 'path to JS/TS entry file', ENTRY_FILE)
@@ -11,6 +12,7 @@ program.command('bundle')
     .option('--output-bundle-dir <string>', 'name of directory containing the bundle file created by the "bundle" command', OUTPUT_BUNDLE_DIR)
     /**
      * @param {Object} options
+     * @param {string} options.framework
      * @param {string} options.platform
      * @param {string} options.outputPath
      * @param {string} options.entryFile
@@ -20,6 +22,7 @@ program.command('bundle')
      */
     .action((options) => {
         bundleCodePush(
+            options.framework,
             options.platform,
             options.outputPath,
             options.entryFile,

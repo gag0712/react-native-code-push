@@ -25,6 +25,7 @@ const { addToReleaseHistory } = require("./addToReleaseHistory");
  *   ): Promise<void>}
  * @param binaryVersion {string}
  * @param appVersion {string}
+ * @param framework {string|undefined} 'expo'
  * @param platform {"ios" | "android"}
  * @param identifier {string?}
  * @param outputPath {string}
@@ -43,6 +44,7 @@ async function release(
     setReleaseHistory,
     binaryVersion,
     appVersion,
+    framework,
     platform,
     identifier,
     outputPath,
@@ -56,7 +58,7 @@ async function release(
 ) {
     const bundleFileName = skipBundle
         ? readBundleFileNameFrom(bundleDirectory)
-        : await bundleCodePush(platform, outputPath, entryFile, jsBundleName, bundleDirectory);
+        : await bundleCodePush(framework, platform, outputPath, entryFile, jsBundleName, bundleDirectory);
     const bundleFilePath = `${bundleDirectory}/${bundleFileName}`;
 
     const downloadUrl = await (async () => {
