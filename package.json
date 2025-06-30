@@ -7,8 +7,12 @@
   "homepage": "https://microsoft.github.io/code-push",
   "keywords": [
     "react-native",
+    "expo",
     "code",
-    "push"
+    "push",
+    "code-push",
+    "react-native-code-push",
+    "expo-code-push"
   ],
   "author": "Soomgo Mobile Team (originally Microsoft Corporation)",
   "license": "MIT",
@@ -48,7 +52,13 @@
     "yazl": "^3.3.1"
   },
   "peerDependencies": {
+    "expo": ">=50.0.0",
     "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "expo": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
