@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.Choreographer;
 
 import androidx.annotation.OptIn;
 
@@ -25,7 +26,6 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.annotations.UnstableReactNativeAPI;
-import com.facebook.react.modules.core.ChoreographerCompat;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.core.ReactChoreographer;
 import com.facebook.react.runtime.ReactHostDelegate;
@@ -99,7 +99,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
     }
 
     private void loadBundleLegacy() {
-        final Activity currentActivity = getCurrentActivity();
+        final Activity currentActivity = getReactApplicationContext().getCurrentActivity();
         if (currentActivity == null) {
             // The currentActivity can be null if it is backgrounded / destroyed, so we simply
             // no-op to prevent any null pointer exceptions.
@@ -223,7 +223,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
     //     React Native uses the id field to track react tags and will overwrite this field.
     //     If that is fine, explicitly overwrite the id field to View.NO_ID before calling addRootView."
     private void resetReactRootViews(ReactDelegate reactDelegate) {
-        ReactActivity currentActivity = (ReactActivity) getCurrentActivity();
+        ReactActivity currentActivity = (ReactActivity) getReactApplicationContext().getCurrentActivity();
         if (currentActivity != null) {
             ReactRootView reactRootView = reactDelegate.getReactRootView();
             if (reactRootView != null) {
@@ -242,7 +242,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
     }
 
     private ReactDelegate resolveReactDelegate() {
-        ReactActivity currentActivity = (ReactActivity) getCurrentActivity();
+        ReactActivity currentActivity = (ReactActivity) getReactApplicationContext().getCurrentActivity();
         if (currentActivity == null) {
             return null;
         }
@@ -278,7 +278,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             return instanceManager;
         }
 
-        final Activity currentActivity = getCurrentActivity();
+        final Activity currentActivity = getReactApplicationContext().getCurrentActivity();
         if (currentActivity == null) {
             return null;
         }
@@ -390,7 +390,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
                             getReactApplicationContext().runOnUiQueueThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    ReactChoreographer.getInstance().postFrameCallback(ReactChoreographer.CallbackType.TIMERS_EVENTS, new ChoreographerCompat.FrameCallback() {
+                                    ReactChoreographer.getInstance().postFrameCallback(ReactChoreographer.CallbackType.TIMERS_EVENTS, new Choreographer.FrameCallback() {
                                         @Override
                                         public void doFrame(long frameTimeNanos) {
                                             if (!latestDownloadProgress.isCompleted()) {
