@@ -128,7 +128,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
 
             ReactHost reactHost = resolveReactHost();
             if (reactHost == null) {
-                // Bridge, Old Architecture and RN < 0.74 (we support Bridgeless >= 0.74)
+                // Bridge, Old Architecture
                 setJSBundleLoaderBridge(instanceManager, latestJSBundleLoader);
                 return;
             }
@@ -184,29 +184,14 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        // reload method introduced in RN 0.74 (https://github.com/reactwg/react-native-new-architecture/discussions/174)
-                        // so, we need to check if reload method exists and call it
-                        try {
-                            ReactDelegate reactDelegate = resolveReactDelegate();
-                            if (reactDelegate == null) {
-                                throw new NoSuchMethodException("ReactDelegate doesn't have reload method in RN < 0.74");
-                            }
+                    ReactDelegate reactDelegate = resolveReactDelegate();
+                    assert reactDelegate != null;
 
-                            resetReactRootViews(reactDelegate);
+                    resetReactRootViews(reactDelegate);
 
-                            Method reloadMethod = reactDelegate.getClass().getMethod("reload");
-                            reloadMethod.invoke(reactDelegate);
-                        } catch (NoSuchMethodException e) {
-                            // RN < 0.74 calls ReactInstanceManager.recreateReactContextInBackground() directly
-                            instanceManager.recreateReactContextInBackground();
-                        }
-                        mCodePush.initializeUpdateAfterRestart();
-                    } catch (Exception e) {
-                        // The recreation method threw an unknown exception
-                        // so just simply fallback to restarting the Activity (if it exists)
-                        loadBundleLegacy();
-                    }
+                    reactDelegate.reload();
+
+                    mCodePush.initializeUpdateAfterRestart();
                 }
             });
 
@@ -247,13 +232,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             return null;
         }
 
-        try {
-            Method getReactDelegateMethod = currentActivity.getClass().getMethod("getReactDelegate");
-            return (ReactDelegate) getReactDelegateMethod.invoke(currentActivity);
-        } catch (Exception e) {
-            // RN < 0.74 doesn't have getReactDelegate method
-            return null;
-        }
+        return currentActivity.getReactDelegate();
     }
 
     private ReactHost resolveReactHost() {
