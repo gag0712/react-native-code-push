@@ -24,10 +24,6 @@
     private ** mReactHost; # bridgeless
     public void reload(...); # RN 0.74 and above
 }
-# RN 0.74 and above
--keepclassmembers class com.facebook.react.ReactActivity {
-    public ** getReactDelegate(...);
-}
 # bridgeless
 -keepclassmembers class com.facebook.react.defaults.DefaultReactHostDelegate {
     private ** jsBundleLoader;

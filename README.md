@@ -8,17 +8,9 @@
 
 ### 🚀 New Architecture support
 
-Tested on the React Native template apps
+Supports React Native 0.74 ~ 0.80.
 
-| RN Version | Old Architecture | New Architecture | New Architecture Bridgeless |
-|--------|--------|--------|--------|
-| 0.73.11 | ✅ | ✅ | Unsupported |
-| 0.74.7 | ✅ | ✅ | ✅ |
-| 0.75.5 | ✅ | ✅ | ✅ |
-| 0.76.7 | ✅ | ✅ | ✅ |
-| 0.77.1 | ✅ | ✅ | ✅ | 
-| 0.78.0 | ✅ | ✅ | ✅ | 
-
+(Tested on the React Native CLI template apps)
 
 ## 🚗 Migration Guide
 
