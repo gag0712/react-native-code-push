@@ -50,20 +50,23 @@ public class CodePush implements ReactPackage {
     private static ReactInstanceHolder mReactInstanceHolder;
     private static CodePush mCurrentInstance;
 
-    public CodePush(String deploymentKey, Context context) {
-        this(deploymentKey, context, false);
-    }
-
     public static String getServiceUrl() {
         return mServerUrl;
     }
 
-    public CodePush(String deploymentKey, Context context, boolean isDebugMode) {
+    public static synchronized CodePush getInstance(Context context, boolean isDebugMode) {
+        if (mCurrentInstance == null) {
+            mCurrentInstance = new CodePush(context, isDebugMode);
+        }
+        return mCurrentInstance;
+    }
+
+    private CodePush(Context context, boolean isDebugMode) {
         mContext = context.getApplicationContext();
 
         mUpdateManager = new CodePushUpdateManager(context.getFilesDir().getAbsolutePath());
         mTelemetryManager = new CodePushTelemetryManager(mContext);
-        mDeploymentKey = deploymentKey;
+        mDeploymentKey = "deprecated_deployment_key";
         mIsDebugMode = isDebugMode;
         mSettingsManager = new SettingsManager(mContext);
 
@@ -88,27 +91,6 @@ public class CodePush implements ReactPackage {
         initializeUpdateAfterRestart();
     }
 
-    public CodePush(String deploymentKey, Context context, boolean isDebugMode, String serverUrl) {
-        this(deploymentKey, context, isDebugMode);
-        mServerUrl = serverUrl;
-    }
-
-    public CodePush(String deploymentKey, Context context, boolean isDebugMode, int publicKeyResourceDescriptor) {
-        this(deploymentKey, context, isDebugMode);
-
-        mPublicKey = getPublicKeyByResourceDescriptor(publicKeyResourceDescriptor);
-    }
-
-    public CodePush(String deploymentKey, Context context, boolean isDebugMode, String serverUrl, Integer publicKeyResourceDescriptor) {
-        this(deploymentKey, context, isDebugMode);
-
-        if (publicKeyResourceDescriptor != null) {
-            mPublicKey = getPublicKeyByResourceDescriptor(publicKeyResourceDescriptor);
-        }
-
-        mServerUrl = serverUrl;
-    }
-
     private String getPublicKeyByResourceDescriptor(int publicKeyResourceDescriptor){
         String publicKey;
         try {
@@ -129,10 +111,10 @@ public class CodePush implements ReactPackage {
 
     private String getCustomPropertyFromStringsIfExist(String propertyName) {
         String property;
-      
+
         String packageName = mContext.getPackageName();
         int resId = mContext.getResources().getIdentifier("CodePush" + propertyName, "string", packageName);
-        
+
         if (resId != 0) {
             property = mContext.getString(resId);
 
@@ -140,7 +122,7 @@ public class CodePush implements ReactPackage {
                 return property;
             } else {
                 CodePushUtils.log("Specified " + propertyName + " is empty");
-            } 
+            }
         }
 
         return null;
@@ -193,19 +175,6 @@ public class CodePush implements ReactPackage {
 
     public String getPublicKey() {
         return mPublicKey;
-    }
-
-    long getBinaryResourcesModifiedTime() {
-        try {
-            String packageName = this.mContext.getPackageName();
-            int codePushApkBuildTimeId = this.mContext.getResources().getIdentifier(CodePushConstants.CODE_PUSH_APK_BUILD_TIME_KEY, "string", packageName);
-            // replace double quotes needed for correct restoration of long value from strings.xml
-            // https://github.com/microsoft/cordova-plugin-code-push/issues/264
-            String codePushApkBuildTime = this.mContext.getResources().getString(codePushApkBuildTimeId).replaceAll("\"","");
-            return Long.parseLong(codePushApkBuildTime);
-        } catch (Exception e) {
-            throw new CodePushUnknownException("Error in getting binary resources modified time", e);
-        }
     }
 
     public String getPackageFolder() {
@@ -349,16 +318,8 @@ public class CodePush implements ReactPackage {
 
     private boolean isPackageBundleLatest(JSONObject packageMetadata) {
         try {
-            Long binaryModifiedDateDuringPackageInstall = null;
-            String binaryModifiedDateDuringPackageInstallString = packageMetadata.optString(CodePushConstants.BINARY_MODIFIED_TIME_KEY, null);
-            if (binaryModifiedDateDuringPackageInstallString != null) {
-                binaryModifiedDateDuringPackageInstall = Long.parseLong(binaryModifiedDateDuringPackageInstallString);
-            }
             String packageAppVersion = packageMetadata.optString("appVersion", null);
-            long binaryResourcesModifiedTime = this.getBinaryResourcesModifiedTime();
-            return binaryModifiedDateDuringPackageInstall != null &&
-                    binaryModifiedDateDuringPackageInstall == binaryResourcesModifiedTime &&
-                    (isUsingTestConfiguration() || sAppVersion.equals(packageAppVersion));
+            return (isUsingTestConfiguration() || sAppVersion.equals(packageAppVersion));
         } catch (NumberFormatException e) {
             throw new CodePushUnknownException("Error in reading binary modified date from package metadata", e);
         }

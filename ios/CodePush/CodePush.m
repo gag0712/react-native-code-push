@@ -5,6 +5,7 @@
 #import <React/RCTEventDispatcher.h>
 #import <React/RCTRootView.h>
 #import <React/RCTUtils.h>
+#import <React/RCTReloadCommand.h>
 #else // back compatibility for RN version < 0.40
 #import "RCTAssert.h"
 #import "RCTBridgeModule.h"
@@ -31,7 +32,7 @@
     long long _latestExpectedContentLength;
     long long _latestReceivedConentLength;
     BOOL _didUpdateProgress;
-    
+
     BOOL _allowed;
     BOOL _restartInProgress;
     NSMutableArray *_restartQueue;
@@ -216,7 +217,7 @@ static NSString *const LatestRollbackCountKey = @"count";
 
 + (void)setDeploymentKey:(NSString *)deploymentKey
 {
-    [CodePushConfig current].deploymentKey = deploymentKey;
+    [CodePushConfig current].deploymentKey = @"deprecated_deployment_key";
 }
 
 /*
@@ -376,7 +377,7 @@ static NSString *const LatestRollbackCountKey = @"count";
     _allowed = YES;
     _restartInProgress = NO;
     _restartQueue = [NSMutableArray arrayWithCapacity:1];
-    
+
     self = [super init];
     if (self) {
         [self initializeUpdateAfterRestart];
@@ -540,7 +541,7 @@ static NSString *const LatestRollbackCountKey = @"count";
             [super.bridge setValue:[CodePush bundleURL] forKey:@"bundleURL"];
         }
 
-        [super.bridge reload];
+        RCTTriggerReloadCommandListeners(@"CodePush reload");
     });
 }
 
@@ -582,7 +583,7 @@ static NSString *const LatestRollbackCountKey = @"count";
     if ([[self class] isFailedHash:[failedPackage objectForKey:PackageHashKey]]) {
         return;
     }
-    
+
     NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
     NSMutableArray *failedUpdates = [preferences objectForKey:FailedUpdatesKey];
     if (failedUpdates == nil) {
@@ -913,7 +914,7 @@ RCT_EXPORT_METHOD(installUpdate:(NSDictionary*)updatePackage
                                                          selector:@selector(applicationDidBecomeActive)
                                                              name:UIApplicationDidBecomeActiveNotification
                                                            object:RCTSharedApplication()];
-                                                           
+
                 [[NSNotificationCenter defaultCenter] addObserver:self
                                                          selector:@selector(applicationWillEnterForeground)
                                                              name:UIApplicationWillEnterForegroundNotification

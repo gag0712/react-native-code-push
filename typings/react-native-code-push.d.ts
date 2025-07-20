@@ -2,15 +2,33 @@ export type DownloadProgressCallback = (progress: DownloadProgress) => void;
 export type SyncStatusChangedCallback = (status: CodePush.SyncStatus) => void;
 export type HandleBinaryVersionMismatchCallback = (update: RemotePackage) => void;
 
-// from code-push SDK
 export interface UpdateCheckRequest {
     /** The native version, not in package.json. */
     app_version: string;
     client_unique_id?: string;
-    deployment_key: string;
     is_companion?: boolean;
     label?: string;
     package_hash?: string;
+}
+
+/**
+ * Alias for a string representing a released CodePush update version.
+ */
+export type ReleaseVersion = string;
+
+/**
+ * The interface representing the release information that the `releaseHistoryFetcher` function must return.
+ */
+export type ReleaseHistoryInterface = Record<ReleaseVersion, ReleaseInfo>;
+
+/**
+ * The interface that represents a single deployment history entry, which the `releaseHistoryFetcher` function should return.
+ */
+export interface ReleaseInfo {
+    enabled: boolean;
+    mandatory: boolean;
+    downloadUrl: string;
+    packageHash: string;
 }
 
 // from code-push SDK
@@ -35,21 +53,46 @@ export interface CodePushOptions extends SyncOptions {
      */
     checkFrequency: CodePush.CheckFrequency;
     /**
-     * Specifies the location of the update's file. It should include the http scheme and host.
-     * It is used for self-hosting.
-     * Defaults to AppCenter storage.
+     * Specifies a function to get the release history.
+     *
+     * If you want to use `updateChecker`, pass no-op function like below.
+     * But it is deprecated and will be removed in the next major version.
+     *
+     * ```ts
+     * const codePushOptions: {
+     *     releaseHistoryFetcher: async () => ({}), // This will not be called
+     * }
+     * ```
      */
-    bundleHost?: string;
+    releaseHistoryFetcher: (updateRequest: UpdateCheckRequest) => Promise<ReleaseHistoryInterface>;
     /**
      * Specify a function to perform the update check.
      * It can be used for self-hosting.
      * Defaults to AppCenter update_check REST API request.
+     *
+     * @deprecated It will be removed in the next major version. Please migrate to `releaseHistoryFetcher`.
      */
     updateChecker?: (updateRequest: UpdateCheckRequest) => Promise<{ update_info: UpdateCheckResponse }>;
     /**
-     * Specifies whether to run the original action, which queries AppCenter if an error occurs while running the `updateChecker` function.
+     * Callback function that is called when the update installation succeeds.
      */
-    fallbackToAppCenter?: boolean;
+    onUpdateSuccess?: (label: string) => void;
+    /**
+     * Callback function that is called when the update rolled back.
+     */
+    onUpdateRollback?: (label: string) => void;
+    /**
+     * Callback function that is called when download starts.
+     */
+    onDownloadStart?: (label: string) => void;
+    /**
+     * Callback function that is called when download finished successfully.
+     */
+    onDownloadSuccess?: (label: string) => void;
+    /**
+     * Callback function that is called when sync process failed.
+     */
+    onSyncError?: (label: string, error: Error) => void;
 }
 
 export interface DownloadProgress {
@@ -289,13 +332,6 @@ export interface StatusReport {
  */
 declare function CodePush(options?: CodePushOptions): (x: any) => any;
 
-/**
- * Decorates a React Component configuring it to sync for updates with the CodePush server.
- *
- * @param x the React Component that will decorated
- */
-declare function CodePush(x: any): any
-
 declare namespace CodePush {
     /**
      * Represents the default settings that will be used by the sync method if
@@ -306,18 +342,16 @@ declare namespace CodePush {
     /**
      * Asks the CodePush service whether the configured app deployment has an update available.
      *
-     * @param deploymentKey The deployment key to use to query the CodePush server for an update.
-     *
      * @param handleBinaryVersionMismatchCallback An optional callback for handling target binary version mismatch
      */
-    function checkForUpdate(deploymentKey?: string, handleBinaryVersionMismatchCallback?: HandleBinaryVersionMismatchCallback): Promise<RemotePackage | null>;
+    function checkForUpdate(handleBinaryVersionMismatchCallback?: HandleBinaryVersionMismatchCallback): Promise<RemotePackage | null>;
 
     /**
      * Retrieves the metadata for an installed update (e.g. description, mandatory).
      *
      * @param updateState The state of the update you want to retrieve the metadata for. Defaults to UpdateState.RUNNING.
      */
-    function getUpdateMetadata(updateState?: UpdateState) : Promise<LocalPackage|null>;
+    function getUpdateMetadata(updateState?: UpdateState): Promise<LocalPackage|null>;
 
     /**
      * Notifies the CodePush runtime that an installed update is considered successful.
@@ -503,3 +537,62 @@ declare namespace CodePush {
 }
 
 export default CodePush;
+
+/**
+ * Interface for the config file required for `npx code-push` CLI operation.
+ *
+ * Please refer to the example code for implementation guidance.
+ */
+export interface CliConfigInterface {
+    /**
+     * Interface that must be implemented to upload CodePush bundle files to an arbitrary infrastructure.
+     *
+     * Used in the `release` command, and must return a URL that allows downloading the file after the upload is completed.
+     * The URL is recorded in the ReleaseHistory, and the CodePush runtime library downloads the bundle file from this address.
+     *
+     * @param source The relative path of the generated bundle file. (e.g. build/bundleOutput/1087bc338fc45a961c...)
+     * @param platform The target platform of the bundle file. This is the string passed when executing the CLI command. ('ios'/'android')
+     * @param identifier An additional identifier string. This can be used to distinguish execution environments by incorporating it into the upload path or file name. This string is passed when executing the CLI command.
+     */
+    bundleUploader: (
+        source: string,
+        platform: "ios" | "android",
+        identifier?: string,
+    ) => Promise<{downloadUrl: string}>;
+
+    /**
+     * Interface that must be implemented to retrieve ReleaseHistory information.
+     *
+     * Use `fetch`, `axios`, or similar methods to fetch the data and return it.
+     *
+     * @param targetBinaryVersion The target binary app version for which ReleaseHistory information is retrieved. This string is passed when executing the CLI command. (e.g., '1.0.0')
+     * @param platform The target platform for which the information is retrieved. This string is passed when executing the CLI command. ('ios'/'android')
+     * @param identifier An additional identifier string. This string is passed when executing the CLI command.
+     */
+    getReleaseHistory: (
+        targetBinaryVersion: string,
+        platform: "ios" | "android",
+        identifier?: string,
+    ) => Promise<ReleaseHistoryInterface>;
+
+    /**
+     * Interface that must be implemented to create or update ReleaseHistory information.
+     *
+     * Used in the `create-history`, `release`, and `update-history` commands.
+     * The created or modified object and the JSON file path containing the result of the command execution are provided.
+     * Implement this function to upload the file or call a REST API to update the release history.
+     *
+     * @param targetBinaryVersion The target binary app version for the ReleaseHistory. This string is passed when executing the CLI command. (e.g., '1.0.0')
+     * @param jsonFilePath The absolute path to a JSON file following the `ReleaseHistoryInterface` structure. The file is created in the project's root directory and deleted when the command execution completes.
+     * @param releaseInfo A plain object following the `ReleaseHistoryInterface` structure.
+     * @param platform The target platform. This string is passed when executing the CLI command. ('ios'/'android')
+     * @param identifier An additional identifier string. This string is passed when executing the CLI command.
+     */
+    setReleaseHistory: (
+        targetBinaryVersion: string,
+        jsonFilePath: string,
+        releaseInfo: ReleaseHistoryInterface,
+        platform: "ios" | "android",
+        identifier?: string,
+    ) => Promise<void>;
+}
