@@ -1,14 +1,4 @@
-const { withAppBuildGradle, withMainApplication, WarningAggregator } = require('expo/config-plugins');
-
-function androidApplyImplementation(appBuildGradle) {
-  const codePushImplementation = `apply from: "../../node_modules/@bravemobile/react-native-code-push/android/codepush.gradle"`;
-
-  if (!appBuildGradle.includes(codePushImplementation)) {
-    return `${appBuildGradle.trimEnd()}\n${codePushImplementation}\n`;
-  }
-
-  return appBuildGradle;
-}
+const { withMainApplication, WarningAggregator } = require('expo/config-plugins');
 
 function androidMainApplicationApplyImplementation(
   mainApplication,
@@ -38,16 +28,6 @@ function androidMainApplicationApplyImplementation(
   return mainApplication;
 }
 
-const withAndroidBuildScriptDependency = (config) => {
-  return withAppBuildGradle(config, (action) => {
-    action.modResults.contents = androidApplyImplementation(
-      action.modResults.contents,
-    );
-
-    return action;
-  });
-};
-
 const withAndroidMainApplicationDependency = (config) => {
   return withMainApplication(config, (action) => {
     action.modResults.contents = androidMainApplicationApplyImplementation(
@@ -67,6 +47,5 @@ const withAndroidMainApplicationDependency = (config) => {
 };
 
 module.exports = {
-  withAndroidBuildScriptDependency,
   withAndroidMainApplicationDependency,
 };
