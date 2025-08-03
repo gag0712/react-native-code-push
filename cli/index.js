@@ -40,4 +40,10 @@ require('./commands/releaseCommand');
  */
 require('./commands/showHistoryCommand')
 
+/**
+ * npx code-push init
+ */
+require('./commands/initCommand')
+
+
 program.parse();
