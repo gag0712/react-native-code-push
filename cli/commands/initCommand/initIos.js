@@ -123,6 +123,6 @@ async function ensureBridgingHeader(projectDir, projectName) {
 
 module.exports = {
     initIos: initIos,
-    modifyObjectiveCAppDelegate,
-    modifySwiftAppDelegate,
+    modifyObjectiveCAppDelegate: modifyObjectiveCAppDelegate,
+    modifySwiftAppDelegate: modifySwiftAppDelegate,
 }
