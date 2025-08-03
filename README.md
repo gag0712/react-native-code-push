@@ -41,11 +41,18 @@ npm install @bravemobile/react-native-code-push
 
 For React Native CLI projects, you can use the automatic setup command to configure your project for CodePush.
 
+This command will automatically edit your `AppDelegate` and `MainApplication` files to integrate CodePush.
+
 ```bash
 npx code-push init
 ```
 
-This command will automatically edit your `AppDelegate` and `MainApplication` files to integrate CodePush.
+And run the following command to install CocoaPods dependencies for iOS:
+
+```bash
+cd ios && pod install && cd ..
+```
+(or `npx pod-install`, `bundle exec pod install --project-directory=./ios`, ..)
 
 ### 2-1. Manual Setup
 
