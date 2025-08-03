@@ -21,11 +21,13 @@ npm remove react-native-code-push
 npm install @bravemobile/react-native-code-push
 ```
 
-Then, follow the installation guide starting from **'4. "CodePush-ify" your app'**.
+1. Edit `android/app/build.gradle` file to remove the `apply from: "../../node_modules/..../codepush.gradle"` line.
 
-The following changes are optional but recommended for cleaning up the old configuration:
-- Since the deployment key is no longer needed due to the retirement of AppCenter, it is recommended to remove it from your `Info.plist`, `strings.xml`, or JavaScript code.
-- Thanks to Auto Linking, you can remove the `react-native-code-push` module settings from `settings.gradle`.
+2. The following changes are optional but recommended for cleaning up the old configuration:
+   - Since the deployment key is no longer needed due to the retirement of AppCenter, it is recommended to remove it from your `Info.plist`, `strings.xml`, or JavaScript code.
+   - Thanks to Auto Linking, you can remove the `react-native-code-push` module settings from `settings.gradle`.
+
+3. Follow the installation guide starting from **'4. "CodePush-ify" your app'**.
 
 
 ## ⚙️ Installation
@@ -129,15 +131,7 @@ Then, edit `AppDelegate.swift` like below.
 
 ### Android Manual Setup
 
-#### (1) Edit `android/app/build.gradle`
-
-Add the following line to the end of the file.
-```diff
-  // ...
-+ apply from: "../../node_modules/@bravemobile/react-native-code-push/android/codepush.gradle"
-```
-
-#### (2) Edit `MainApplication` Code
+#### Edit `MainApplication` Code
 
 **If you have `MainApplication.kt` (>= RN 0.73)**
 
