@@ -37,7 +37,7 @@ npm install @bravemobile/react-native-code-push
 
 ### 2. Run init command
 
-Run the following command to automatically configure your project for CodePush.
+For React Native CLI projects, you can use the automatic setup command to configure your project for CodePush.
 
 ```bash
 npx code-push init
@@ -45,10 +45,14 @@ npx code-push init
 
 This command will automatically edit your `AppDelegate` and `MainApplication` files to integrate CodePush.
 
+### 2-1. Manual Setup
+
+If you prefer manual setup or if the automatic configuration fails, you can follow the manual setup instructions below.
+
 <details><summary>Click to see the manual setup instructions.</summary>
 <p>
 
-### iOS Setup
+### iOS Manual Setup
 
 #### (1) Install CocoaPods Dependencies
 
@@ -123,7 +127,7 @@ Then, edit `AppDelegate.swift` like below.
 ```
 
 
-### Android Setup
+### Android Manual Setup
 
 #### (1) Edit `android/app/build.gradle`
 
@@ -177,6 +181,7 @@ Add the following line to the end of the file.
 </p>
 </details>
 
+
 ### 3. Expo Setup
 For Expo projects, you can use the automated config plugin instead of manual setup.
 
@@ -200,6 +205,7 @@ npx expo prebuild
 
 **Requirements**
 Expo SDK: 50.0.0 or higher
+
 
 ### 4. "CodePush-ify" Your App
 
