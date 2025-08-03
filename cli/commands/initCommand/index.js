@@ -4,11 +4,11 @@ const { program } = require('commander');
 
 program
     .command('init')
-    .description('Initialize CodePush project')
+    .description('Automatically performs iOS/Android native configurations to initialize the CodePush project.')
     .action(async () => {
-        console.log('Start initializing CodePush...');
+        console.log('log: Start initializing CodePush...');
         await initAndroid();
         await initIos();
-        console.log('CodePush has been successfully initialized.');
+        console.log('log: CodePush has been successfully initialized.');
     });
 

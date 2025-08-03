@@ -4,7 +4,7 @@ const { EOL } = require('os');
 
 function modifyMainApplicationKt(mainApplicationContent) {
     if (mainApplicationContent.includes('CodePush.getJSBundleFile()')) {
-        console.log('MainApplication.kt already has CodePush initialized.');
+        console.log('log: MainApplication.kt already has CodePush initialized.');
         return mainApplicationContent;
     }
     return mainApplicationContent
@@ -13,26 +13,26 @@ function modifyMainApplicationKt(mainApplicationContent) {
 }
 
 async function initAndroid() {
-    console.log('Running Android setup...');
+    console.log('log: Running Android setup...');
     await applyMainApplication();
 }
 
 async function applyMainApplication() {
     const mainApplicationPath = await findMainApplication();
     if (!mainApplicationPath) {
-        console.log('Could not find MainApplication.kt');
+        console.log('log: Could not find MainApplication.kt');
         return;
     }
 
     if (mainApplicationPath.endsWith('.java')) {
-        console.log('MainApplication.java is not supported. Please migrate to MainApplication.kt.');
+        console.log('log: MainApplication.java is not supported. Please migrate to MainApplication.kt.');
         return;
     }
 
     const mainApplicationContent = fs.readFileSync(mainApplicationPath, 'utf-8');
     const newContent = modifyMainApplicationKt(mainApplicationContent);
     fs.writeFileSync(mainApplicationPath, newContent);
-    console.log('Successfully updated MainApplication.kt.');
+    console.log('log: Successfully updated MainApplication.kt.');
 }
 
 async function findMainApplication() {
