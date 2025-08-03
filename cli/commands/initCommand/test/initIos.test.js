@@ -83,16 +83,16 @@ const objcTemplate = `
 `;
 
 describe('iOS init command - pure functions', () => {
-  it('should correctly modify Swift AppDelegate content', () => {
-    const modifiedContent = modifySwiftAppDelegate(swiftTemplate);
-    expect(modifiedContent).toContain('CodePush.bundleURL()');
-    expect(modifiedContent).not.toContain('Bundle.main.url(forResource: "main", withExtension: "jsbundle")');
-  });
+    it('should correctly modify Swift AppDelegate content', () => {
+        const modifiedContent = modifySwiftAppDelegate(swiftTemplate);
+        expect(modifiedContent).toContain('CodePush.bundleURL()');
+        expect(modifiedContent).not.toContain('Bundle.main.url(forResource: "main", withExtension: "jsbundle")');
+    });
 
-  it('should correctly modify Objective-C AppDelegate content', () => {
-    const modifiedContent = modifyObjectiveCAppDelegate(objcTemplate);
-    expect(modifiedContent).toContain('#import <CodePush/CodePush.h>');
-    expect(modifiedContent).toContain('[CodePush bundleURL]');
-    expect(modifiedContent).not.toContain('[[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];');
-  });
+    it('should correctly modify Objective-C AppDelegate content', () => {
+        const modifiedContent = modifyObjectiveCAppDelegate(objcTemplate);
+        expect(modifiedContent).toContain('#import <CodePush/CodePush.h>');
+        expect(modifiedContent).toContain('[CodePush bundleURL]');
+        expect(modifiedContent).not.toContain('[[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];');
+    });
 });
