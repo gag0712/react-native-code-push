@@ -1,5 +1,6 @@
 const { modifyObjectiveCAppDelegate, modifySwiftAppDelegate } = require('../initIos');
 
+// https://github.com/react-native-community/template/blob/0.80.2/template/ios/HelloWorld/AppDelegate.swift
 const swiftTemplate = `
 import UIKit
 import React
@@ -46,6 +47,7 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
 }
 `;
 
+// https://github.com/react-native-community/template/blob/0.76.9/template/ios/HelloWorld/AppDelegate.mm
 const objcTemplate = `
 #import "AppDelegate.h"
 

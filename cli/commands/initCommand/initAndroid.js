@@ -38,12 +38,11 @@ async function applyMainApplication() {
 async function findMainApplication() {
     const searchPath = path.join(process.cwd(), 'android', 'app', 'src', 'main', 'java');
     const files = fs.readdirSync(searchPath, { recursive: true });
-    // Support only .kt files
-    const mainApplicationFile = files.find(file => file.endsWith('MainApplication.kt'));
+    const mainApplicationFile = files.find(file => file.endsWith('MainApplication.java') || file.endsWith('MainApplication.kt'));
     return mainApplicationFile ? path.join(searchPath, mainApplicationFile) : null;
 }
 
 module.exports = {
     initAndroid: initAndroid,
-    modifyMainApplicationKt,
+    modifyMainApplicationKt: modifyMainApplicationKt,
 };
