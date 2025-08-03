@@ -35,18 +35,32 @@ function findAppDelegate(searchPath) {
     return appDelegateFile ? path.join(searchPath, appDelegateFile) : null;
 }
 
-async function setupObjectiveC(appDelegatePath) {
-    const appDelegateContent = fs.readFileSync(appDelegatePath, 'utf-8');
+function modifyObjectiveCAppDelegate(appDelegateContent) {
     const IMPORT_STATEMENT = '#import <CodePush/CodePush.h>';
     if (appDelegateContent.includes(IMPORT_STATEMENT)) {
         console.log('AppDelegate already has CodePush imported.');
-        return;
+        return appDelegateContent;
     }
 
-    const newContent = appDelegateContent
+    return appDelegateContent
         .replace('#import "AppDelegate.h"\n', `#import "AppDelegate.h"\n${IMPORT_STATEMENT}\n`)
         .replace('[[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];', '[CodePush bundleURL];');
+}
 
+function modifySwiftAppDelegate(appDelegateContent) {
+    const CODEPUSH_CALL_STATEMENT = 'CodePush.bundleURL()';
+    if (appDelegateContent.includes(CODEPUSH_CALL_STATEMENT)) {
+        console.log('AppDelegate.swift already configured for CodePush.');
+        return appDelegateContent;
+    }
+
+    return appDelegateContent
+        .replace('Bundle.main.url(forResource: "main", withExtension: "jsbundle")', CODEPUSH_CALL_STATEMENT);
+}
+
+async function setupObjectiveC(appDelegatePath) {
+    const appDelegateContent = fs.readFileSync(appDelegatePath, 'utf-8');
+    const newContent = modifyObjectiveCAppDelegate(appDelegateContent);
     fs.writeFileSync(appDelegatePath, newContent);
     console.log('Successfully updated AppDelegate.m/mm.');
 }
@@ -59,14 +73,7 @@ async function setupSwift(appDelegatePath, projectDir, projectName) {
     }
 
     const appDelegateContent = fs.readFileSync(appDelegatePath, 'utf-8');
-    const CODEPUSH_CALL_STATEMENT = 'CodePush.bundleURL()';
-    if (appDelegateContent.includes(CODEPUSH_CALL_STATEMENT)) {
-        console.log('AppDelegate.swift already configured for CodePush.');
-        return;
-    }
-
-    const newContent = appDelegateContent
-        .replace('Bundle.main.url(forResource: "main", withExtension: "jsbundle")', CODEPUSH_CALL_STATEMENT);
+    const newContent = modifySwiftAppDelegate(appDelegateContent);
     fs.writeFileSync(appDelegatePath, newContent);
     console.log('Successfully updated AppDelegate.swift.');
 }
@@ -116,4 +123,6 @@ async function ensureBridgingHeader(projectDir, projectName) {
 
 module.exports = {
     initIos: initIos,
+    modifyObjectiveCAppDelegate,
+    modifySwiftAppDelegate,
 }
