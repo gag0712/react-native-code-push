@@ -6,8 +6,62 @@ import { SemverVersioning } from './versioning/SemverVersioning'
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
 const PackageMixins = require("./package-mixins")(NativeCodePush);
+const RolloutStorage = require("react-native").NativeModules.RolloutStorage;
 
-const DEPLOYMENT_KEY = 'deprecated_deployment_key';
+const DEPLOYMENT_KEY = 'deprecated_deployment_key',
+      ROLLOUT_CACHE_PREFIX = 'CodePushRolloutDecision_',
+      ROLLOUT_CACHE_KEY = 'CodePushRolloutKey';
+
+function hashDeviceId(deviceId) {
+  let hash = 0;
+  for (let i = 0; i < deviceId.length; i++) {
+    hash = ((hash << 5) - hash) + deviceId.charCodeAt(i);
+    hash |= 0; // Convert to 32bit int
+  }
+  return Math.abs(hash);
+}
+
+function getRolloutKey(label, rollout) {
+  return `${ROLLOUT_CACHE_PREFIX}${label}_rollout_${rollout ?? 100}`;
+}
+
+function getBucket(clientId, packageHash) {
+  const hash = hashDeviceId(`${clientId ?? ''}_${packageHash ?? ''}`);
+  return (Math.abs(hash) % 100);
+}
+
+export async function shouldApplyCodePushUpdate(remotePackage, clientId, onRolloutSkipped) {
+  if (remotePackage.rollout === undefined || remotePackage.rollout >= 100) {
+    return true;
+  }
+
+  const rolloutKey = getRolloutKey(remotePackage.label, remotePackage.rollout),
+        cachedDecision = await RolloutStorage.getItem(rolloutKey);
+
+  if (cachedDecision != null) {
+    // should apply if cachedDecision is true
+    return cachedDecision === 'true';
+  }
+
+  const bucket = getBucket(clientId, remotePackage.packageHash),
+        inRollout = bucket < remotePackage.rollout,
+        prevRolloutCacheKey = await RolloutStorage.getItem(ROLLOUT_CACHE_KEY);
+
+  console.log(`[CodePush] Bucket: ${bucket}, rollout: ${remotePackage.rollout} → ${inRollout ? 'IN' : 'OUT'}`);
+
+  if(prevRolloutCacheKey)
+    await RolloutStorage.removeItem(prevRolloutCacheKey);
+
+  await RolloutStorage.setItem(ROLLOUT_CACHE_KEY, rolloutKey);
+  await RolloutStorage.setItem(rolloutKey, inRollout.toString());
+
+  if (!inRollout) {
+    console.log(`[CodePush] Skipping update due to rollout. Bucket ${bucket} >= rollout ${remotePackage.rollout}`);
+    onRolloutSkipped?.(remotePackage.label);
+  }
+
+  return inRollout;
+}
 
 async function checkForUpdate(handleBinaryVersionMismatchCallback = null) {
   /*
@@ -121,6 +175,7 @@ async function checkForUpdate(handleBinaryVersionMismatchCallback = null) {
           package_size: 0,
           // not used at runtime.
           should_run_binary_version: false,
+          rollout: latestReleaseInfo.rollout
         };
 
         return mapToRemotePackageMetadata(updateInfo);
@@ -164,6 +219,13 @@ async function checkForUpdate(handleBinaryVersionMismatchCallback = null) {
     return null;
   } else {
     const remotePackage = { ...update, ...PackageMixins.remote() };
+
+    // Rollout filtering
+    const shouldApply = await shouldApplyCodePushUpdate(remotePackage, nativeConfig.clientUniqueId, sharedCodePushOptions?.onRolloutSkipped);
+
+    if(!shouldApply)
+      return { skipRollout: true };
+
     remotePackage.failedInstall = await NativeCodePush.isFailedUpdate(remotePackage.packageHash);
     return remotePackage;
   }
@@ -193,6 +255,7 @@ function mapToRemotePackageMetadata(updateInfo) {
     packageHash: updateInfo.package_hash ?? '',
     packageSize: updateInfo.package_size ?? 0,
     downloadUrl: updateInfo.download_url ?? '',
+    rollout: updateInfo.rollout ?? 100,
   };
 }
 
@@ -493,6 +556,11 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
       return CodePush.SyncStatus.UPDATE_INSTALLED;
     };
 
+    if(remotePackage?.skipRollout){
+      syncStatusChangeCallback(CodePush.SyncStatus.UP_TO_DATE);
+      return CodePush.SyncStatus.UP_TO_DATE;
+    }
+
     const updateShouldBeIgnored = await shouldUpdateBeIgnored(remotePackage, syncOptions);
 
     if (!remotePackage || updateShouldBeIgnored) {
@@ -609,6 +677,9 @@ let CodePush;
  *
  *   onSyncError: (label: string, error: Error) => void | undefined,
  *   setOnSyncError(onSyncErrorFunction: (label: string, error: Error) => void | undefined): void,
+ * 
+ *   onRolloutSkipped: (label: string, error: Error) => void | undefined,
+ *   setOnRolloutSkipped(onRolloutSkippedFunction: (label: string, error: Error) => void | undefined): void,
  * }}
  */
 const sharedCodePushOptions = {
@@ -653,6 +724,12 @@ const sharedCodePushOptions = {
     if (typeof onSyncErrorFunction !== 'function') throw new Error('Please pass a function to onSyncError');
     this.onSyncError = onSyncErrorFunction;
   },
+  onRolloutSkipped: undefined,
+  setOnRolloutSkipped(onRolloutSkippedFunction) {
+    if (!onRolloutSkippedFunction) return;
+    if (typeof onRolloutSkippedFunction !== 'function') throw new Error('Please pass a function to onRolloutSkipped');
+    this.onRolloutSkipped = onRolloutSkippedFunction;
+  }
 }
 
 function codePushify(options = {}) {
@@ -688,6 +765,7 @@ function codePushify(options = {}) {
   sharedCodePushOptions.setOnDownloadStart(options.onDownloadStart);
   sharedCodePushOptions.setOnDownloadSuccess(options.onDownloadSuccess);
   sharedCodePushOptions.setOnSyncError(options.onSyncError);
+  sharedCodePushOptions.setOnRolloutSkipped(options.onRolloutSkipped);
 
   const decorator = (RootComponent) => {
     class CodePushComponent extends React.Component {
