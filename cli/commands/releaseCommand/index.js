@@ -16,6 +16,7 @@ program.command('release')
     .option('-j, --js-bundle-name <string>', 'JS bundle file name (default-ios: "main.jsbundle" / default-android: "index.android.bundle")')
     .option('-m, --mandatory <bool>', 'make the release to be mandatory', parseBoolean, false)
     .option('--enable <bool>', 'make the release to be enabled', parseBoolean, true)
+    .option('--rollout <number>', 'rollout percentage (0-100)', parseFloat)
     .option('--skip-bundle <bool>', 'skip bundle process', parseBoolean, false)
     .option('--skip-cleanup <bool>', 'skip cleanup process', parseBoolean, false)
     .option('--output-bundle-dir <string>', 'name of directory containing the bundle file created by the "bundle" command', OUTPUT_BUNDLE_DIR)
@@ -32,6 +33,7 @@ program.command('release')
      * @param {string} options.bundleName
      * @param {string} options.mandatory
      * @param {string} options.enable
+     * @param {number} options.rollout
      * @param {string} options.skipBundle
      * @param {string} options.skipCleanup
      * @param {string} options.outputBundleDir
@@ -39,6 +41,11 @@ program.command('release')
      */
     .action(async (options) => {
         const config = findAndReadConfigFile(process.cwd(), options.config);
+
+        if (typeof options.rollout === 'number' && (options.rollout < 0 || options.rollout > 100)) {
+            console.error('Rollout percentage number must be between 0 and 100 (inclusive).');
+            process.exit(1);
+        }
 
         await release(
             config.bundleUploader,
@@ -54,6 +61,7 @@ program.command('release')
             options.bundleName,
             options.mandatory,
             options.enable,
+            options.rollout,
             options.skipBundle,
             options.skipCleanup,
             `${options.outputPath}/${options.outputBundleDir}`,
