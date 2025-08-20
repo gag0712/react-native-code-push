@@ -8,7 +8,7 @@
 
 ### 🚀 New Architecture support
 
-Supports React Native 0.74 ~ 0.80.
+Supports React Native 0.74 ~ 0.81.
 
 (Tested on the React Native CLI template apps)
 
