@@ -324,6 +324,10 @@ module.exports = Config;
   {
     "extends": "@react-native/typescript-config/tsconfig.json",
     // ...
+    "include": [
+      // ...
++     "code-push.config.ts"
+    ],
 +   "ts-node": {
 +     "compilerOptions": {
 +       "module": "CommonJS",
