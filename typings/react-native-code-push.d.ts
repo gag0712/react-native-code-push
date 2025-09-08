@@ -561,7 +561,7 @@ export interface CliConfigInterface {
      *
      * @param source The relative path of the generated bundle file. (e.g. build/bundleOutput/1087bc338fc45a961c...)
      * @param platform The target platform of the bundle file. This is the string passed when executing the CLI command. ('ios'/'android')
-     * @param identifier An additional identifier string. This can be used to distinguish execution environments by incorporating it into the upload path or file name. This string is passed when executing the CLI command.
+     * @return {Promise<{downloadUrl: string}>} An object containing the `downloadUrl` property, which is the URL from which the uploaded bundle file can be downloaded. This URL will be recorded in the release history.
      */
     bundleUploader: (
         source: string,
