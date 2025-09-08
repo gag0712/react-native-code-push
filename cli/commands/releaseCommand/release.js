@@ -68,7 +68,7 @@ async function release(
             const { downloadUrl } = await bundleUploader(bundleFilePath, platform, identifier);
             return downloadUrl
         } catch (error) {
-            console.error('Failed to upload the bundle file. Exiting the program.', error)
+            console.error('Failed to upload the bundle file. Exiting the program.\n', error)
             process.exit(1)
         }
     })();
