@@ -1,14 +1,4 @@
-const { withAppBuildGradle, withMainApplication, WarningAggregator } = require('expo/config-plugins');
-
-function androidApplyImplementation(appBuildGradle) {
-  const codePushImplementation = `apply from: "../../node_modules/@bravemobile/react-native-code-push/android/codepush.gradle"`;
-
-  if (!appBuildGradle.includes(codePushImplementation)) {
-    return `${appBuildGradle.trimEnd()}\n${codePushImplementation}\n`;
-  }
-
-  return appBuildGradle;
-}
+const { withMainApplication, WarningAggregator } = require('expo/config-plugins');
 
 function androidMainApplicationApplyImplementation(
   mainApplication,
@@ -31,22 +21,12 @@ function androidMainApplicationApplyImplementation(
     Please add "${add.replace(/\n/g, '').trim()}" to the MainApplication.kt.
     Supported format: Expo SDK default template.
 
-    Android manual setup: https://github.com/Soomgo-Mobile/react-native-code-push#3-android-setup
+    Android manual setup: https://github.com/Soomgo-Mobile/react-native-code-push#2-1-manual-setup
     `,
   );
 
   return mainApplication;
 }
-
-const withAndroidBuildScriptDependency = (config) => {
-  return withAppBuildGradle(config, (action) => {
-    action.modResults.contents = androidApplyImplementation(
-      action.modResults.contents,
-    );
-
-    return action;
-  });
-};
 
 const withAndroidMainApplicationDependency = (config) => {
   return withMainApplication(config, (action) => {
@@ -67,6 +47,5 @@ const withAndroidMainApplicationDependency = (config) => {
 };
 
 module.exports = {
-  withAndroidBuildScriptDependency,
   withAndroidMainApplicationDependency,
 };

@@ -1,6 +1,6 @@
 {
   "name": "@bravemobile/react-native-code-push",
-  "version": "11.1.0",
+  "version": "12.0.0-beta.7",
   "description": "React Native plugin for the CodePush service",
   "main": "CodePush.js",
   "typings": "typings/react-native-code-push.d.ts",
@@ -49,6 +49,7 @@
     "hoist-non-react-statics": "^3.3.2",
     "semver": "^7.3.5",
     "shelljs": "^0.8.5",
+    "xcode": "^3.0.1",
     "yazl": "^3.3.1"
   },
   "peerDependencies": {

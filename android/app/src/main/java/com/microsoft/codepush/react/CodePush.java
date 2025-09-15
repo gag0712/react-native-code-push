@@ -177,19 +177,6 @@ public class CodePush implements ReactPackage {
         return mPublicKey;
     }
 
-    long getBinaryResourcesModifiedTime() {
-        try {
-            String packageName = this.mContext.getPackageName();
-            int codePushApkBuildTimeId = this.mContext.getResources().getIdentifier(CodePushConstants.CODE_PUSH_APK_BUILD_TIME_KEY, "string", packageName);
-            // replace double quotes needed for correct restoration of long value from strings.xml
-            // https://github.com/microsoft/cordova-plugin-code-push/issues/264
-            String codePushApkBuildTime = this.mContext.getResources().getString(codePushApkBuildTimeId).replaceAll("\"","");
-            return Long.parseLong(codePushApkBuildTime);
-        } catch (Exception e) {
-            throw new CodePushUnknownException("Error in getting binary resources modified time", e);
-        }
-    }
-
     public String getPackageFolder() {
         JSONObject codePushLocalPackage = mUpdateManager.getCurrentPackage();
         if (codePushLocalPackage == null) {
@@ -331,16 +318,8 @@ public class CodePush implements ReactPackage {
 
     private boolean isPackageBundleLatest(JSONObject packageMetadata) {
         try {
-            Long binaryModifiedDateDuringPackageInstall = null;
-            String binaryModifiedDateDuringPackageInstallString = packageMetadata.optString(CodePushConstants.BINARY_MODIFIED_TIME_KEY, null);
-            if (binaryModifiedDateDuringPackageInstallString != null) {
-                binaryModifiedDateDuringPackageInstall = Long.parseLong(binaryModifiedDateDuringPackageInstallString);
-            }
             String packageAppVersion = packageMetadata.optString("appVersion", null);
-            long binaryResourcesModifiedTime = this.getBinaryResourcesModifiedTime();
-            return binaryModifiedDateDuringPackageInstall != null &&
-                    binaryModifiedDateDuringPackageInstall == binaryResourcesModifiedTime &&
-                    (isUsingTestConfiguration() || sAppVersion.equals(packageAppVersion));
+            return (isUsingTestConfiguration() || sAppVersion.equals(packageAppVersion));
         } catch (NumberFormatException e) {
             throw new CodePushUnknownException("Error in reading binary modified date from package metadata", e);
         }
