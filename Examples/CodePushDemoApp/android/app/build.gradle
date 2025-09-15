@@ -117,5 +117,3 @@ dependencies {
         implementation jscFlavor
     }
 }
-
-apply from: "../../node_modules/@bravemobile/react-native-code-push/android/codepush.gradle"
