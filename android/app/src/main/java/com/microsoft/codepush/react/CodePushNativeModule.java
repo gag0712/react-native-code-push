@@ -10,7 +10,6 @@ import android.view.Choreographer;
 
 import androidx.annotation.OptIn;
 
-import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactDelegate;
 import com.facebook.react.ReactHost;
 import com.facebook.react.ReactInstanceManager;
@@ -116,7 +115,7 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
 
     // Use reflection to find and set the appropriate fields on ReactInstanceManager. See #556 for a proposal for a less brittle way
     // to approach this.
-    private void setJSBundle(ReactInstanceManager instanceManager, String latestJSBundleFile) throws IllegalAccessException {
+    private void setJSBundle(String latestJSBundleFile) throws IllegalAccessException {
         try {
             JSBundleLoader latestJSBundleLoader;
             if (latestJSBundleFile.toLowerCase().startsWith("assets://")) {
@@ -128,7 +127,6 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             ReactHost reactHost = resolveReactHost();
             if (reactHost == null) {
                 // Bridge, Old Architecture
-                setJSBundleLoaderBridge(instanceManager, latestJSBundleLoader);
                 return;
             }
 
@@ -138,12 +136,6 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
             CodePushUtils.log("Unable to set JSBundle - CodePush may not support this version of React Native");
             throw new IllegalAccessException("Could not setJSBundle");
         }
-    }
-
-    private void setJSBundleLoaderBridge(ReactInstanceManager instanceManager, JSBundleLoader latestJSBundleLoader) throws NoSuchFieldException, IllegalAccessException {
-        Field bundleLoaderField = instanceManager.getClass().getDeclaredField("mBundleLoader");
-        bundleLoaderField.setAccessible(true);
-        bundleLoaderField.set(instanceManager, latestJSBundleLoader);
     }
 
     @OptIn(markerClass = UnstableReactNativeAPI.class)
@@ -159,27 +151,14 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
 
     private void loadBundle() {
         clearLifecycleEventListener();
-        try {
-            mCodePush.clearDebugCacheIfNeeded(resolveInstanceManager());
-        } catch(Exception e) {
-            // If we got error in out reflection we should clear debug cache anyway.
-            mCodePush.clearDebugCacheIfNeeded(null);
-        }
 
         try {
-            // #1) Get the ReactInstanceManager instance, which is what includes the
-            //     logic to reload the current React context.
-            final ReactInstanceManager instanceManager = resolveInstanceManager();
-            if (instanceManager == null) {
-                return;
-            }
-
             String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
 
-            // #2) Update the locally stored JS bundle file path
-            setJSBundle(instanceManager, latestJSBundleFile);
+            // #1) Update the locally stored JS bundle file path
+            setJSBundle(latestJSBundleFile);
 
-            // #3) Get the context creation method and fire it on the UI thread (which RN enforces)
+            // #2) Get the context creation method and fire it on the UI thread (which RN enforces)
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
@@ -247,24 +226,6 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    // Use reflection to find the ReactInstanceManager. See #556 for a proposal for a less brittle way to approach this.
-    private ReactInstanceManager resolveInstanceManager() throws NoSuchFieldException, IllegalAccessException {
-        ReactInstanceManager instanceManager = CodePush.getReactInstanceManager();
-        if (instanceManager != null) {
-            return instanceManager;
-        }
-
-        final Activity currentActivity = getReactApplicationContext().getCurrentActivity();
-        if (currentActivity == null) {
-            return null;
-        }
-
-        ReactApplication reactApplication = (ReactApplication) currentActivity.getApplication();
-        instanceManager = reactApplication.getReactNativeHost().getReactInstanceManager();
-
-        return instanceManager;
     }
 
     private void restartAppInternal(boolean onlyIfUpdateIsPending) {
