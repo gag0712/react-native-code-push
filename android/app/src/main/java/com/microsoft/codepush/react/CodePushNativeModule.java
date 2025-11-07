@@ -12,8 +12,8 @@ import androidx.annotation.OptIn;
 
 import com.facebook.react.ReactDelegate;
 import com.facebook.react.ReactHost;
-import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactActivity;
+import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactRootView;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.JSBundleLoader;
@@ -126,7 +126,9 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
 
             ReactHost reactHost = resolveReactHost();
             if (reactHost == null) {
+                CodePushUtils.log("Unable to resolve ReactHost");
                 // Bridge, Old Architecture
+                setJSBundleLoaderBridge(latestJSBundleLoader);
                 return;
             }
 
@@ -138,11 +140,27 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
         }
     }
 
+    private void setJSBundleLoaderBridge(JSBundleLoader latestJSBundleLoader) throws NoSuchFieldException, IllegalAccessException {
+        ReactDelegate reactDelegate = resolveReactDelegate();
+        assert reactDelegate != null;
+        ReactInstanceManager instanceManager = reactDelegate.getReactInstanceManager();
+        Field bundleLoaderField = instanceManager.getClass().getDeclaredField("mBundleLoader");
+        bundleLoaderField.setAccessible(true);
+        bundleLoaderField.set(instanceManager, latestJSBundleLoader);
+    }
+
     @OptIn(markerClass = UnstableReactNativeAPI.class)
     private void setJSBundleLoaderBridgeless(ReactHost reactHost, JSBundleLoader latestJSBundleLoader) throws NoSuchFieldException, IllegalAccessException {
-        Field mReactHostDelegateField = reactHost.getClass().getDeclaredField("mReactHostDelegate");
-        mReactHostDelegateField.setAccessible(true);
-        ReactHostDelegate reactHostDelegate = (ReactHostDelegate) mReactHostDelegateField.get(reactHost);
+        Field reactHostDelegateField;
+        try {
+            // RN < 0.81
+            reactHostDelegateField = reactHost.getClass().getDeclaredField("mReactHostDelegate");
+        } catch (NoSuchFieldException e) {
+            // RN >= 0.81
+            reactHostDelegateField = reactHost.getClass().getDeclaredField("reactHostDelegate");
+        }
+        reactHostDelegateField.setAccessible(true);
+        ReactHostDelegate reactHostDelegate = (ReactHostDelegate) reactHostDelegateField.get(reactHost);
         assert reactHostDelegate != null;
         Field jsBundleLoaderField = reactHostDelegate.getClass().getDeclaredField("jsBundleLoader");
         jsBundleLoaderField.setAccessible(true);
@@ -216,16 +234,11 @@ public class CodePushNativeModule extends ReactContextBaseJavaModule {
     private ReactHost resolveReactHost() {
         ReactDelegate reactDelegate = resolveReactDelegate();
         if (reactDelegate == null) {
+            CodePushUtils.log("Unable to resolve ReactDelegate");
             return null;
         }
 
-        try {
-            Field reactHostField = reactDelegate.getClass().getDeclaredField("mReactHost");
-            reactHostField.setAccessible(true);
-            return (ReactHost) reactHostField.get(reactDelegate);
-        } catch (Exception e) {
-            return null;
-        }
+        return reactDelegate.getReactHost();
     }
 
     private void restartAppInternal(boolean onlyIfUpdateIsPending) {
